@@ -1,0 +1,14 @@
+/* main.css — Entry stylesheet importing all module files in correct cascade order */
+
+@import 'variables.css';
+@import 'preloader.css';
+@import 'navbar.css';
+@import 'home.css';
+@import 'gioi-thieu.css';
+@import 'huong-dan.css';
+@import 'giai-dau.css';
+@import 'tin-tuc.css';
+@import 'chatbot.css';
+@import 'modals.css';
+@import 'footer.css';
+@import 'responsive.css';

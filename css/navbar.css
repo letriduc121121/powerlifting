@@ -1,0 +1,205 @@
+/* navbar.css — Header and Navigation Menu styles */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid var(--border) !important;
+  box-shadow: var(--shadow);
+  height: 80px;
+  overflow: visible; /* allow logo to extend beyond navbar height */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* left (logo) | center (links) | right (admin/actions) */
+  align-items: center;
+  padding: 0 32px;
+  transition: box-shadow 0.3s ease;
+}
+
+.navbar.scrolled {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 2px;
+  color: var(--blue);
+  text-decoration: none;
+  justify-self: start;
+  height: 80px; /* match navbar height so layout stays consistent */
+}
+
+.nav-logo span {
+  color: var(--yellow-dark);
+}
+
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  height: 80px;
+  overflow: hidden;
+}
+
+#navLogoImg,
+.logo-wrapper img {
+  height: 72px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  max-width: none;
+  transition: transform var(--transition-fast);
+}
+
+.nav-logo:hover #navLogoImg {
+  transform: scale(1.03);
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 4px;
+  align-items: center;
+  justify-self: center;
+  justify-content: center;
+}
+
+.mobile-only-nav-item {
+  display: none;
+}
+
+.nav-link {
+  font-family: var(--font-cond);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 8px 18px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--blue) !important;
+  background: var(--blue-light) !important;
+}
+
+.nav-cta {
+  background: var(--blue);
+  color: #fff !important;
+  padding: 8px 20px;
+  border-radius: 20px;
+}
+
+.nav-cta:hover {
+  background: var(--blue-dark) !important;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: end;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.nav-right > * {
+  white-space: nowrap;
+}
+
+.desktop-only-nav-right {
+  display: flex;
+  align-items: center;
+}
+
+/* Admin visibility toggles */
+body:not(.admin-logged) #adminBadge,
+body:not(.admin-logged) #navImgConfigBtn,
+body:not(.admin-logged) #logoutBtn {
+  display: none !important;
+}
+
+body.admin-logged #loginBtn {
+  display: none !important;
+}
+
+#adminBadge {
+  display: none;
+  font-family: var(--font-cond);
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  background: var(--yellow);
+  color: #0b1224 !important;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#navImgConfigBtn {
+  background: var(--yellow);
+  color: #0b1224;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+#loginBtn {
+  background: transparent;
+  border: 2px solid var(--blue);
+  color: var(--blue);
+}
+
+#logoutBtn {
+  background: transparent;
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+  display: none;
+}
+
+.login-btn-nav {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 2px solid transparent;
+  background: transparent;
+  transition: all var(--transition-fast);
+}
+
+.login-btn-nav:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.nav-toggle span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--text);
+  transition: all 0.3s ease;
+}

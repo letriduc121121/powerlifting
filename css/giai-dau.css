@@ -1,0 +1,359 @@
+/* giai-dau.css — Tournament Info, Events, Prizes, and Registration CTA styles */
+
+.tournament-section {
+  background: var(--bg-white);
+  padding: 90px 0;
+}
+
+/* Info Grid (4 top cards) */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-bottom: 56px;
+}
+
+.info-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 24px;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition);
+}
+
+.info-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 17px;
+  background: linear-gradient(135deg, var(--blue), var(--yellow));
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.4s ease;
+}
+
+.info-card:hover::before {
+  opacity: 0.15;
+}
+
+.info-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-4px);
+}
+
+.info-card .ic-icon {
+  font-size: 2.2rem;
+  margin-bottom: 16px;
+}
+
+.info-card h3 {
+  font-family: var(--font-cond);
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.info-card p {
+  font-family: var(--font-cond);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.info-card small {
+  color: var(--text-light);
+  font-size: 0.85rem;
+  display: block;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.info-card .field-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.info-card .editable-field {
+  border-bottom: 1px dashed var(--border);
+  cursor: default;
+  transition: border-color 0.2s ease;
+}
+
+body.admin-logged .info-card .editable-field {
+  cursor: pointer;
+  border-color: rgba(26, 115, 232, 0.4);
+}
+
+body.admin-logged .info-card .editable-field:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+body.admin-logged .info-card .field-edit-icon {
+  position: relative !important;
+  top: -2px !important;
+  right: auto !important;
+  display: inline-flex !important;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+/* Events list */
+.events-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.event-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 32px 24px;
+  text-align: left;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.event-card:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--blue) !important;
+  transform: translateY(-6px) !important;
+  box-shadow: var(--shadow-lg);
+}
+
+.event-card .ec-num {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  color: var(--blue);
+  position: absolute;
+  top: 8px;
+  right: 18px;
+  letter-spacing: 1px;
+  opacity: 0.2;
+}
+
+.event-card .ec-icon {
+  font-size: 2.4rem;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.event-card h4 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  color: var(--blue);
+  margin-bottom: 12px;
+}
+
+.event-card p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.event-card .card-admin-btns {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: none;
+  gap: 6px;
+}
+
+body.admin-logged .event-card .card-admin-btns {
+  display: flex;
+}
+
+/* Prizes */
+.prizes-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 48px;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.prize-card {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 36px 24px;
+  text-align: center;
+  flex: 1;
+  max-width: 250px;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.prize-card:hover {
+  background: var(--glass-bg-hover) !important;
+  box-shadow: var(--shadow-lg) !important;
+  transform: translateY(-6px) !important;
+}
+
+.prize-card.gold {
+  background: rgba(255, 214, 0, 0.08) !important;
+  border-color: rgba(255, 214, 0, 0.4) !important;
+}
+.prize-card.gold:hover {
+  border-color: var(--yellow-dark) !important;
+  background: rgba(255, 214, 0, 0.16) !important;
+}
+
+.prize-card.silver {
+  background: rgba(148, 163, 184, 0.08) !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+.prize-card.silver:hover {
+  border-color: #94a3b8 !important;
+  background: rgba(148, 163, 184, 0.16) !important;
+}
+
+.prize-card.bronze {
+  background: rgba(161, 136, 127, 0.08) !important;
+  border-color: rgba(161, 136, 127, 0.35) !important;
+}
+.prize-card.bronze:hover {
+  border-color: #a1887f !important;
+  background: rgba(161, 136, 127, 0.16) !important;
+}
+
+.prize-card .p-pos {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  letter-spacing: 2px;
+  color: var(--text-light);
+  line-height: 1;
+}
+
+.prize-card.gold .p-pos {
+  color: var(--yellow-dark);
+  font-size: 3.5rem;
+}
+
+.prize-card .p-medal {
+  font-size: 2.2rem;
+  margin: 10px 0;
+}
+
+.prize-card h4 {
+  font-family: var(--font-cond);
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prize-card .p-money {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
+.prize-card.gold .p-money {
+  font-size: 2.2rem;
+  color: var(--yellow-dark);
+}
+
+.prize-card small {
+  color: var(--text-light);
+  font-size: 0.8rem;
+  display: block;
+  margin-top: 8px;
+}
+
+.prize-card .field-wrap {
+  position: relative;
+}
+
+.prize-card .card-admin-btns {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: none;
+}
+
+body.admin-logged .prize-card .card-admin-btns {
+  display: block;
+}
+
+/* Register CTA */
+.register-cta {
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+  border-radius: 16px;
+  padding: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-lg);
+  color: #fff;
+  margin-top: 56px;
+  position: relative;
+  overflow: hidden;
+}
+
+.register-cta::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  animation: ctaSweep 4s ease-in-out infinite;
+}
+
+@keyframes ctaSweep {
+  0%, 100% { left: -100%; }
+  50% { left: 150%; }
+}
+
+.register-cta-text h3 {
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 2.2rem;
+  letter-spacing: 2px;
+  color: #fff;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.register-cta-text p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.05rem;
+  max-width: 600px;
+}
+
+.reg-link-admin {
+  margin-top: 16px;
+}
+
+.admin-add-wrap {
+  margin-bottom: 32px;
+}

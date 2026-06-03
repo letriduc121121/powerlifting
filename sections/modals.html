@@ -1,0 +1,911 @@
+<!-- ===== MODALS & POPUPS ===== -->
+
+<!-- 1. News Detail Popup Modal -->
+<div
+  class="news-detail-overlay"
+  id="newsDetailOverlay"
+  onclick="closeNewsDetail(event)"
+>
+  <div class="news-detail-popup" id="newsDetailPopup">
+    <button class="ndp-close" onclick="closeNewsDetail(event, true)">
+      ✕
+    </button>
+    <div class="ndp-img" id="ndpImg"></div>
+    <div class="ndp-body">
+      <span class="ndp-cat" id="ndpCat">THÔNG BÁO</span>
+      <h2 id="ndpTitle">Tiêu đề tin tức</h2>
+      <span class="ndp-date" id="ndpDate"
+        >📅 28/05/2026 | 👁️ 0 lượt xem</span
+      >
+      <div class="ndp-desc-quote" id="ndpDescQuote"></div>
+      <div class="ndp-content" id="ndpContent">Nội dung chi tiết...</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Login Admin Modal -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal" style="max-width: 360px">
+    <div class="modal-header">
+      <h3>Đăng Nhập Admin</h3>
+      <button class="modal-close" onclick="closeModal('loginModal')">
+        ✕
+      </button>
+    </div>
+    <form id="loginForm" onsubmit="event.preventDefault(); doLogin();" autocomplete="on">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Tên đăng nhập</label>
+          <input type="text" id="loginUser" name="username" autocomplete="username" placeholder="Tên đăng nhập..." />
+        </div>
+        <div class="form-group">
+          <label>Mật khẩu</label>
+          <input type="password" id="loginPass" name="password" autocomplete="current-password" placeholder="Mật khẩu..." />
+        </div>
+        <p
+          id="loginErr"
+          style="
+            color: #ea4335;
+            font-size: 0.85rem;
+            display: none;
+            margin: 0 0 10px;
+          "
+        >
+          Tài khoản hoặc mật khẩu không chính xác!
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Đăng Nhập</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 3. Edit Hero Field Modal -->
+<div class="modal-overlay" id="heroFieldModal">
+  <div class="modal" id="heroFieldModalContainer" style="max-width: 400px">
+    <div class="modal-header">
+      <h3 id="heroFieldModalTitle">Chỉnh sửa</h3>
+      <button class="modal-close" onclick="closeModal('heroFieldModal')">
+        ✕
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label id="heroFieldLabel">Giá trị mới</label>
+        <input type="text" id="heroFieldInput" />
+        <textarea id="heroFieldTextarea" rows="8" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-family: var(--font-body); font-size: 0.95rem; outline: none; display: none; line-height: 1.6; resize: vertical;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button
+        class="btn btn-ghost-sm"
+        onclick="closeModal('heroFieldModal')"
+      >
+        Hủy
+      </button>
+      <button class="btn btn-primary" onclick="saveHeroField()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Add/Edit Event Modal -->
+<div class="modal-overlay" id="addEventModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="addEventTitle">Thêm Nội Dung Thi Đấu</h3>
+      <button class="modal-close" onclick="closeModal('addEventModal')">
+        ✕
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Tên bài thi</label>
+        <input type="text" id="evName" placeholder="Ví dụ: SQUAT" />
+      </div>
+      <div class="form-group">
+        <label>Biểu tượng (emoji)</label>
+        <input type="text" id="evIcon" placeholder="Ví dụ: 🦵" />
+      </div>
+      <div class="form-group">
+        <label>Mô tả chi tiết</label>
+        <textarea
+          id="evDesc"
+          rows="3"
+          placeholder="Mô tả kỹ thuật bài thi..."
+        ></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button
+        class="btn btn-ghost-sm"
+        onclick="closeModal('addEventModal')"
+      >
+        Hủy
+      </button>
+      <button class="btn btn-primary" onclick="saveEvent()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Add/Edit Roadmap Modal -->
+<div class="modal-overlay" id="addRoadmapModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="addRoadmapTitle">Thêm Lộ Trình</h3>
+      <button class="modal-close" onclick="closeModal('addRoadmapModal')">
+        ✕
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Khoảng thời gian (Tuần)</label>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+          "
+        >
+          <span
+            style="
+              font-family: var(--font-cond);
+              font-weight: 700;
+              font-size: 0.95rem;
+            "
+          >Tuần</span>
+          <input
+            type="number"
+            id="rmWeekStart"
+            min="1"
+            max="99"
+            placeholder="Từ"
+            style="width: 80px"
+          />
+          <span style="color: var(--text-muted); font-size: 0.9rem"
+            >đến</span
+          >
+          <input
+            type="number"
+            id="rmWeekEnd"
+            min="1"
+            max="99"
+            placeholder="Đến (Tùy chọn)"
+            style="width: 100px"
+          />
+        </div>
+        <p
+          id="rmWeekError"
+          style="
+            color: #ea4335;
+            font-size: 0.82rem;
+            display: none;
+            margin-top: 6px;
+          "
+        ></p>
+      </div>
+      <div class="form-group">
+        <label>Tiêu đề bài học</label>
+        <input
+          type="text"
+          id="rmTitle"
+          placeholder="Ví dụ: Kỹ thuật căn bản"
+        />
+      </div>
+      <div class="form-group">
+        <label>Nội dung lộ trình</label>
+        <textarea
+          id="rmContent"
+          rows="4"
+          placeholder="Mô tả chi tiết giáo án tập luyện..."
+        ></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button
+        class="btn btn-ghost-sm"
+        onclick="closeModal('addRoadmapModal')"
+      >
+        Hủy
+      </button>
+      <button class="btn btn-primary" onclick="saveRoadmap()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- 6. Add/Edit Video Modal -->
+<div class="modal-overlay" id="addVideoModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="addVideoTitle">Thêm Video Hướng Dẫn</h3>
+      <button class="modal-close" onclick="closeModal('addVideoModal')">
+        ✕
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Tên video</label>
+        <input type="text" id="vName" placeholder="Tên bài hướng dẫn..." />
+      </div>
+      <div class="form-group">
+        <label>Nguồn Video</label>
+        <div class="tab-btns">
+          <button
+            class="tab-btn active"
+            id="vTabUrl"
+            onclick="switchVideoTab('url')"
+          >
+            URL (YouTube / Vimeo)
+          </button>
+          <button
+            class="tab-btn"
+            id="vTabLocal"
+            onclick="switchVideoTab('local')"
+          >
+            Tải lên file video
+          </button>
+        </div>
+        <div class="video-src-panel active" id="urlPanel">
+          <input
+            type="text"
+            id="vUrl"
+            placeholder="Ví dụ: https://www.youtube.com/watch?v=... hoặc https://drive.google.com/file/d/..."
+          />
+          <p class="file-note">
+            Hỗ trợ: YouTube, Vimeo, Google Drive. <br>
+            <strong>Google Drive:</strong> Share video → Cài đặt "Anyone with the link can view" → Copy link.
+          </p>
+        </div>
+        <div class="video-src-panel" id="localPanel">
+          <input
+            type="file"
+            id="vFile"
+            accept="video/*"
+            onchange="handleLocalVideoSelect(this)"
+          />
+          <p class="file-note">
+            Chọn file video từ thiết bị của bạn (chỉ chạy demo tại browser
+            hiện tại).
+          </p>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Ảnh thumbnail (Ảnh nền video)</label>
+        <input
+          type="file"
+          id="vThumbnail"
+          accept="image/*"
+          onchange="previewVideoThumbnail(this)"
+        />
+        <p class="file-note">
+          Tùy chọn: Upload ảnh thumbnail tùy chỉnh. Nếu để trống, sẽ dùng ảnh mặc định từ YouTube hoặc ảnh fallback.
+        </p>
+        <img
+          src=""
+          alt="Thumbnail Preview"
+          class="news-img-preview"
+          id="vThumbnailPreview"
+          style="display:none"
+        />
+      </div>
+      <div class="form-group">
+        <label>Tags danh mục (Gõ rồi nhấn Enter)</label>
+        <div class="tags-input-wrap" id="tagsWrap">
+          <input
+            type="text"
+            id="tagInput"
+            placeholder="Thêm tag..."
+            onkeydown="handleTagInput(event)"
+          />
+        </div>
+        <div class="suggested-tags-container" id="suggestedTags">
+          <!-- Suggested tag chips in app.js -->
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button
+        class="btn btn-ghost-sm"
+        onclick="closeModal('addVideoModal')"
+      >
+        Hủy
+      </button>
+      <button class="btn btn-primary" onclick="saveVideo()">
+        Lưu Video
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 7. Add/Edit News Modal -->
+<div class="modal-overlay" id="addNewsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="addNewsTitle">Thêm Tin Tức Mới</h3>
+      <button class="modal-close" onclick="closeModal('addNewsModal')">
+        ✕
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Tiêu đề bài viết</label>
+        <input type="text" id="nTitle" placeholder="Tiêu đề..." />
+      </div>
+      <div class="form-group">
+        <label>Danh mục</label>
+        <select id="nCat">
+          <option value="THÔNG BÁO">THÔNG BÁO</option>
+          <option value="KẾT QUẢ">KẾT QUẢ</option>
+          <option value="VĐV NỔI BẬT">VĐV NỔI BẬT</option>
+          <option value="HƯỚNG DẪN">HƯỚNG DẪN</option>
+          <option value="SỰ KIỆN">SỰ KIỆN</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tóm tắt ngắn (1-2 câu)</label>
+        <textarea
+          id="nDesc"
+          rows="2"
+          placeholder="Hiển thị ở trang danh sách..."
+        ></textarea>
+      </div>
+      <div class="form-group">
+        <label>Nội dung chi tiết</label>
+        <textarea
+          id="nFullContent"
+          rows="6"
+          placeholder="Viết nội dung bài viết đầy đủ tại đây..."
+        ></textarea>
+      </div>
+      <div class="form-group">
+        <label>Hình ảnh bài viết</label>
+        <input
+          type="file"
+          id="nImage"
+          accept="image/*"
+          onchange="previewNewsImage(this)"
+        />
+        <p class="file-note">
+          Chọn file ảnh. File sẽ được nén và lưu ở dạng Base64.
+        </p>
+        <img
+          src=""
+          alt="Preview"
+          class="news-img-preview"
+          id="nImagePreview"
+        />
+      </div>
+      <div class="form-group">
+        <label>Độ rộng hiển thị (Tin nổi bật)?</label>
+        <select id="nFeatured">
+          <option value="0">Tin thường (1 cột)</option>
+          <option value="1">Tin nổi bật (Chiếm 2 cột)</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost-sm" onclick="closeModal('addNewsModal')">
+        Hủy
+      </button>
+      <button class="btn btn-primary" onclick="saveNews()">Đăng Tin</button>
+    </div>
+  </div>
+</div>
+
+<!-- 8. Edit Prizes Modal -->
+<div class="modal-overlay" id="prizesModal">
+  <div class="modal" style="max-width: 450px">
+    <div class="modal-header">
+      <h3>Chỉnh Sửa Giải Thưởng</h3>
+      <button class="modal-close" onclick="closeModal('prizesModal')">
+        ✕
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Gold prize inputs -->
+      <h4 class="modal-sub-title">🥇 Giải Vàng (Vô Địch)</h4>
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-bottom: 12px;
+        "
+      >
+        <div class="form-group" style="margin: 0">
+          <label>Số tiền</label>
+          <input type="text" id="prizeGoldAmt" />
+        </div>
+        <div class="form-group" style="margin: 0">
+          <label>Mô tả phụ</label>
+          <input type="text" id="prizeGoldDesc" />
+        </div>
+      </div>
+
+      <!-- Silver prize inputs -->
+      <h4 class="modal-sub-title">🥈 Giải Bạc (Á Quân)</h4>
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-bottom: 12px;
+        "
+      >
+        <div class="form-group" style="margin: 0">
+          <label>Số tiền</label>
+          <input type="text" id="prizeSilverAmt" />
+        </div>
+        <div class="form-group" style="margin: 0">
+          <label>Mô tả phụ</label>
+          <input type="text" id="prizeSilverDesc" />
+        </div>
+      </div>
+
+      <!-- Bronze prize inputs -->
+      <h4 class="modal-sub-title">🥉 Giải Đồng (Hạng Ba)</h4>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+        <div class="form-group" style="margin: 0">
+          <label>Số tiền</label>
+          <input type="text" id="prizeBronzeAmt" />
+        </div>
+        <div class="form-group" style="margin: 0">
+          <label>Mô tả phụ</label>
+          <input type="text" id="prizeBronzeDesc" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost-sm" onclick="closeModal('prizesModal')">
+        Hủy
+      </button>
+      <button class="btn btn-primary" onclick="savePrizes()">
+        Lưu Giải Thưởng
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 9. Edit Registration Link Modal -->
+<div class="modal-overlay" id="regLinkModal">
+  <div class="modal" style="max-width: 440px">
+    <div class="modal-header">
+      <h3>Link Đăng Ký Giải Đấu</h3>
+      <button class="modal-close" onclick="closeModal('regLinkModal')">
+        ✕
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Đường dẫn Form đăng ký (Google Form, etc.)</label>
+        <input
+          type="text"
+          id="regLinkInput"
+          placeholder="https://docs.google.com/forms/..."
+        />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost-sm" onclick="closeModal('regLinkModal')">
+        Hủy
+      </button>
+      <button class="btn btn-primary" onclick="saveRegLink()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- 10. Video Viewer Modal (Fullscreen) -->
+<div class="modal-overlay" id="videoViewerModal" style="display:none" onclick="closeVideoViewer(event)">
+  <div class="modal video-viewer-modal" onclick="event.stopPropagation()">
+    <button class="modal-close video-viewer-close" onclick="closeVideoViewer(event, true)">✕</button>
+    <div class="video-viewer-container" id="videoViewerContainer">
+      <!-- Video iframe sẽ được inject vào đây -->
+    </div>
+    <div class="video-viewer-info" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+      <div style="flex: 1;">
+        <h3 id="videoViewerTitle" style="margin: 0 0 12px 0;">Video Title</h3>
+        <div id="videoViewerTags"></div>
+      </div>
+      <div class="video-viewer-views" id="videoViewerCount" style="display: flex; align-items: center; gap: 6px; font-family: var(--font-cond); font-weight: 700; color: var(--text-muted); font-size: 1.1rem; padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 8px; white-space: nowrap; margin-top: 2px;">
+        <span>👁️</span>
+        <span id="videoViewerCountVal">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 11. System Image Configuration Modal -->
+<div class="modal-overlay" id="imageConfigModal">
+  <div class="modal" style="max-width: 600px">
+    <div class="modal-header">
+      <h3>QUẢN LÝ HÌNH ẢNH HỆ THỐNG</h3>
+      <button class="modal-close" onclick="closeModal('imageConfigModal')">
+        ✕
+      </button>
+    </div>
+    <div class="modal-body" style="max-height: 65vh; overflow-y: auto">
+      <!-- Logo Website -->
+      <div
+        style="
+          border-bottom: 1px solid var(--border);
+          padding-bottom: 20px;
+          margin-bottom: 20px;
+        "
+      >
+        <h4
+          style="
+            font-family: var(--font-cond);
+            color: var(--blue);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+          "
+        >
+          1. LOGO WEBSITE
+        </h4>
+        <div class="form-group" style="margin-bottom: 12px">
+          <label>Đường dẫn URL ảnh</label>
+          <input
+            type="text"
+            id="imgUrlLogo"
+            placeholder="Ví dụ: /logo.png hoặc URL ảnh online"
+            onchange="handleImageUrlChange('logo', this.value)"
+          />
+        </div>
+        <div class="form-group media-uploader">
+          <label>Hoặc tải ảnh lên từ thiết bị</label>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              onclick="document.getElementById('imgFileLogo').click()"
+            >
+              📁 Chọn File
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              style="display: none"
+              id="imgClearLogoBtn"
+              onclick="clearConfigImage('logo')"
+            >
+              Xóa
+            </button>
+            <input
+              type="file"
+              id="imgFileLogo"
+              accept="image/*"
+              style="display: none"
+              onchange="uploadConfigImage('logo', this)"
+            />
+          </div>
+          <p class="file-note">
+            Chấp nhận JPG, PNG, WebP. File sẽ được lưu dưới dạng Base64.
+          </p>
+          <div style="margin-top: 8px">
+            <img
+              id="imgPreviewLogo"
+              src=""
+              alt="Logo Preview"
+              style="
+                max-width: 100%;
+                max-height: 120px;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+                display: none;
+                object-fit: contain;
+              "
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Background -->
+      <div
+        style="
+          border-bottom: 1px solid var(--border);
+          padding-bottom: 20px;
+          margin-bottom: 20px;
+        "
+      >
+        <h4
+          style="
+            font-family: var(--font-cond);
+            color: var(--blue);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+          "
+        >
+          2. ẢNH NỀN HERO
+        </h4>
+        <div class="form-group" style="margin-bottom: 12px">
+          <label>Đường dẫn URL ảnh</label>
+          <input
+            type="text"
+            id="imgUrlHeroBg"
+            placeholder="Bỏ trống để dùng dải màu mặc định"
+            onchange="handleImageUrlChange('heroBg', this.value)"
+          />
+        </div>
+        <div class="form-group media-uploader">
+          <label>Hoặc tải ảnh lên từ thiết bị</label>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              onclick="document.getElementById('imgFileHeroBg').click()"
+            >
+              📁 Chọn File
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              style="display: none"
+              id="imgClearHeroBgBtn"
+              onclick="clearConfigImage('heroBg')"
+            >
+              Xóa
+            </button>
+            <input
+              type="file"
+              id="imgFileHeroBg"
+              accept="image/*"
+              style="display: none"
+              onchange="uploadConfigImage('heroBg', this)"
+            />
+          </div>
+          <p class="file-note">
+            Chấp nhận JPG, PNG, WebP. File sẽ được lưu dưới dạng Base64.
+          </p>
+          <div style="margin-top: 8px">
+            <img
+              id="imgPreviewHeroBg"
+              src=""
+              alt="Hero BG Preview"
+              style="
+                max-width: 100%;
+                max-height: 120px;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+                display: none;
+                object-fit: contain;
+              "
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Chatbot Mascot -->
+      <div
+        style="
+          border-bottom: 1px solid var(--border);
+          padding-bottom: 20px;
+          margin-bottom: 20px;
+        "
+      >
+        <h4
+          style="
+            font-family: var(--font-cond);
+            color: var(--blue);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+          "
+        >
+          3. LOGO CHAT BOX (MASCOT)
+        </h4>
+        <div class="form-group" style="margin-bottom: 12px">
+          <label>Đường dẫn URL ảnh</label>
+          <input
+            type="text"
+            id="imgUrlChatbotLogo"
+            placeholder="Ví dụ: /chatbot-logo.png"
+            onchange="handleImageUrlChange('chatbotLogo', this.value)"
+          />
+        </div>
+        <div class="form-group media-uploader">
+          <label>Hoặc tải ảnh lên từ thiết bị</label>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              onclick="document.getElementById('imgFileChatbotLogo').click()"
+            >
+              📁 Chọn File
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              style="display: none"
+              id="imgClearChatbotLogoBtn"
+              onclick="clearConfigImage('chatbotLogo')"
+            >
+              Xóa
+            </button>
+            <input
+              type="file"
+              id="imgFileChatbotLogo"
+              accept="image/*"
+              style="display: none"
+              onchange="uploadConfigImage('chatbotLogo', this)"
+            />
+          </div>
+          <p class="file-note">
+            Chấp nhận JPG, PNG, WebP. File sẽ được lưu dưới dạng Base64.
+          </p>
+          <div style="margin-top: 8px">
+            <img
+              id="imgPreviewChatbotLogo"
+              src=""
+              alt="Chatbot Logo Preview"
+              style="
+                max-width: 100%;
+                max-height: 120px;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+                display: none;
+                object-fit: contain;
+              "
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- News Fallback -->
+      <div
+        style="
+          border-bottom: 1px solid var(--border);
+          padding-bottom: 20px;
+          margin-bottom: 20px;
+        "
+      >
+        <h4
+          style="
+            font-family: var(--font-cond);
+            color: var(--blue);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+          "
+        >
+          4. ẢNH BÀI VIẾT MẶC ĐỊNH (NEWS FALLBACK)
+        </h4>
+        <div class="form-group" style="margin-bottom: 12px">
+          <label>Đường dẫn URL ảnh</label>
+          <input
+            type="text"
+            id="imgUrlNewsFallback"
+            placeholder="Bỏ trống để dùng dải màu mặc định"
+            onchange="handleImageUrlChange('newsFallback', this.value)"
+          />
+        </div>
+        <div class="form-group media-uploader">
+          <label>Hoặc tải ảnh lên từ thiết bị</label>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              onclick="document.getElementById('imgFileNewsFallback').click()"
+            >
+              📁 Chọn File
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              style="display: none"
+              id="imgClearNewsFallbackBtn"
+              onclick="clearConfigImage('newsFallback')"
+            >
+              Xóa
+            </button>
+            <input
+              type="file"
+              id="imgFileNewsFallback"
+              accept="image/*"
+              style="display: none"
+              onchange="uploadConfigImage('newsFallback', this)"
+            />
+          </div>
+          <p class="file-note">
+            Chấp nhận JPG, PNG, WebP. File sẽ được lưu dưới dạng Base64.
+          </p>
+          <div style="margin-top: 8px">
+            <img
+              id="imgPreviewNewsFallback"
+              src=""
+              alt="News Fallback Preview"
+              style="
+                max-width: 100%;
+                max-height: 120px;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+                display: none;
+                object-fit: contain;
+              "
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Fallback -->
+      <div>
+        <h4
+          style="
+            font-family: var(--font-cond);
+            color: var(--blue);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+          "
+        >
+          5. ẢNH VIDEO MẶC ĐỊNH (VIDEO FALLBACK)
+        </h4>
+        <div class="form-group" style="margin-bottom: 12px">
+          <label>Đường dẫn URL ảnh</label>
+          <input
+            type="text"
+            id="imgUrlVideoFallback"
+            placeholder="Bỏ trống để dùng dải màu mặc định"
+            onchange="handleImageUrlChange('videoFallback', this.value)"
+          />
+        </div>
+        <div class="form-group media-uploader">
+          <label>Hoặc tải ảnh lên từ thiết bị</label>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              onclick="document.getElementById('imgFileVideoFallback').click()"
+            >
+              📁 Chọn File
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              style="display: none"
+              id="imgClearVideoFallbackBtn"
+              onclick="clearConfigImage('videoFallback')"
+            >
+              Xóa
+            </button>
+            <input
+              type="file"
+              id="imgFileVideoFallback"
+              accept="image/*"
+              style="display: none"
+              onchange="uploadConfigImage('videoFallback', this)"
+            />
+          </div>
+          <p class="file-note">
+            Chấp nhận JPG, PNG, WebP. File sẽ được lưu dưới dạng Base64.
+          </p>
+          <div style="margin-top: 8px">
+            <img
+              id="imgPreviewVideoFallback"
+              src=""
+              alt="Video Fallback Preview"
+              style="
+                max-width: 100%;
+                max-height: 120px;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+                display: none;
+                object-fit: contain;
+              "
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button
+        class="btn btn-primary"
+        onclick="closeModal('imageConfigModal')"
+      >
+        Hoàn tất
+      </button>
+    </div>
+  </div>
+</div>

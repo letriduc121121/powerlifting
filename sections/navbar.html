@@ -1,0 +1,76 @@
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+  <a href="#home" class="nav-logo">
+    <div class="logo-wrapper">
+      <img id="navLogoImg" src="/images/logo.png" alt="Dáng Tạ Logo" />
+    </div>
+  </a>
+  <button class="nav-toggle" id="navToggle">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <ul class="nav-links" id="navLinks">
+    <li>
+      <a href="#home" class="nav-link active" data-sec="home">Home</a>
+    </li>
+    <li>
+      <a href="#gioi-thieu" class="nav-link" data-sec="gioi-thieu">Giới Thiệu</a>
+    </li>
+    <li>
+      <a href="#huong-dan" class="nav-link" data-sec="huong-dan">Hướng Dẫn</a>
+    </li>
+    <li>
+      <a href="#giai-dau" class="nav-link" data-sec="giai-dau">Giải Đấu</a>
+    </li>
+    <li>
+      <a href="#tin-tuc" class="nav-link" data-sec="tin-tuc">Tin Tức</a>
+    </li>
+    <li id="navAdminStats" style="display: none;">
+      <a href="#adminStatsSection" class="nav-link" data-sec="adminStatsSection">Thống Kê</a>
+    </li>
+    <li><a href="#dang-ky-link" class="nav-link nav-cta">Tham Gia</a></li>
+    <li class="mobile-only-nav-item" style="width: 100%">
+      <button
+        class="login-btn-nav"
+        id="mobileLoginBtn"
+        style="width: 100%; margin-top: 8px"
+        onclick="openLoginModal()"
+      >
+        Admin
+      </button>
+    </li>
+  </ul>
+  <div class="nav-right desktop-only-nav-right">
+    <span id="adminBadge">ADMIN</span>
+    <button
+      class="login-btn-nav"
+      id="navImgConfigBtn"
+      style="
+        display: none;
+        margin-right: 10px;
+        background: var(--yellow);
+        color: #0b1224;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: bold;
+      "
+      onclick="openImageConfigModal()"
+    >
+      🖼️ Ảnh &amp; Logo
+    </button>
+    <button class="login-btn-nav" id="loginBtn" onclick="openLoginModal()">
+      Admin
+    </button>
+    <button
+      class="login-btn-nav"
+      id="logoutBtn"
+      style="display: none"
+      onclick="logout()"
+    >
+      Đăng xuất
+    </button>
+  </div>
+</nav>
