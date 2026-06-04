@@ -1,214 +1,40 @@
-// backend/server.js — Main Backend Setup and Seeding Script
+// backend/server.js
 
 const express = require('express');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const path = require('path');
-const fs = require('fs');
+const cors    = require('cors');
+const path    = require('path');
 require('dotenv').config();
 
-const connectDB = require('./config/db');
+const connectDB   = require('./config/db');
+const seedAdmin   = require('./seeds/seedAdmin');
+const seedData    = require('./seeds/seedData');
 
-// Models
-const Admin = require('./models/Admin');
-const Video = require('./models/Video');
-const News = require('./models/News');
-const AppData = require('./models/AppData');
-
-// Express App Config
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/powerlifting';
 
-// HTML Template Compiler
-function compileHtml() {
-  try {
-    const templatePath = path.join(__dirname, '..', 'index.template.html');
-    const outputPath = path.join(__dirname, '..', 'index.html');
-    if (!fs.existsSync(templatePath)) return;
-    
-    let html = fs.readFileSync(templatePath, 'utf8');
-    const includeRegex = /<!--\s*INCLUDE:\s*([^\s]+)\s*-->/g;
-    html = html.replace(includeRegex, (match, filepath) => {
-      const fullPath = path.join(__dirname, '..', filepath);
-      if (fs.existsSync(fullPath)) {
-        return fs.readFileSync(fullPath, 'utf8');
-      }
-      return `<!-- Include Error: File ${filepath} not found -->`;
-    });
-    fs.writeFileSync(outputPath, html, 'utf8');
-  } catch (error) {
-    console.error('Error compiling HTML template:', error.message);
-  }
-}
-
-// Middleware
+// ── Middleware ────────────────────────────────────────────────────────────────
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Support base64 image uploads
+app.use(express.json({ limit: '50mb' }));
 
-// Auto-compile on requests to root index files
-app.use((req, res, next) => {
-  if (req.url === '/' || req.url === '/index.html') {
-    compileHtml();
-  }
-  next();
-});
-
-// Serve client files from the root directory (where index.html, css/, js/, images/ reside)
+// ── Serve static frontend from project root ───────────────────────────────────
 const clientPath = path.join(__dirname, '..');
 app.use(express.static(clientPath));
 
-// Connect to MongoDB
-connectDB(MONGO_URI)
-  .then(() => {
-    seedAdmin();
-    seedDefaultData();
-    compileHtml(); // Compile on start
-  });
+// ── Connect DB → seed → start ─────────────────────────────────────────────────
+connectDB(MONGO_URI).then(async () => {
+  await seedAdmin();
+  await seedData();
 
-// Seed default Admin Account
-async function seedAdmin() {
-  try {
-    const adminExists = await Admin.findOne({ username: 'admin' });
-    if (!adminExists) {
-      const hashedPassword = await bcrypt.hash('123456', 10);
-      await Admin.create({ username: 'admin', password: hashedPassword });
-      console.log('Default admin seeded successfully (admin/123456).');
-    }
-  } catch (error) {
-    console.error('Error seeding admin:', error.message);
-  }
-}
+  // ── API Routes ──────────────────────────────────────────────────────────────
+  app.use('/api/auth',   require('./routes/auth'));
+  app.use('/api/data',   require('./routes/data'));
+  app.use('/api/videos', require('./routes/videos'));
+  app.use('/api/news',   require('./routes/news'));
+  app.use('/api/views',  require('./routes/views'));
 
-// Seeding Default Data configuration
-const defaultData = {
-  heroDate: '20/08/2026 – 21/08/2026',
-  heroLocation: 'Thành phố Hà Nội',
-  infoTimeSub: '07:00 – 18:00',
-  infoLocationSub: 'Nhà thi đấu tỉnh',
-  infoWeightClass: 'Nam: 59, 66, 74, 83, 93, 105, 120, +120kg',
-  infoWeightClassSub: 'Nữ: 47, 52, 57, 63, 69, 76, 84, +84kg',
-  infoTarget: 'Mở rộng toàn quốc',
-  infoTargetSub: 'Từ 16 tuổi trở lên',
-  regLink: 'https://docs.google.com/forms/d/10-Q74Dtl2qNVqGP4tAjFDO-QQaygniekPbYu-WlRG8Q/edit?hl=vi',
-  introTitle: 'Powerlifting Là Gì?',
-  introDesc: 'Powerlifting là bộ môn thể thao sức mạnh tối đa, thử thách giới hạn thể chất thông qua ba bài nâng cơ bản: Gánh tạ (Squat), Đẩy ngực (Bench Press) và Kéo tạ (Deadlift). Khác với cử tạ Olympic đòi hỏi kỹ thuật tốc độ cực cao, Powerlifting tập trung hoàn toàn vào sức mạnh cơ bắp thô và kỹ thuật tối ưu hóa đòn bẩy cơ thể. Mỗi vận động viên có 3 lượt thực hiện cho mỗi bài nâng để tìm ra mức tạ tối đa (1RM) cao nhất của mình.',
-  images: {
-    logo: '/images/logo.png',
-    heroBg: '/images/hero-bg-v2.png',
-    newsFallback: '/images/news-fallback.png',
-    videoFallback: '/images/video-fallback.png',
-    chatbotLogo: '/images/chatbot-logo.png'
-  },
-  prizes: {
-    gold: { title: 'Vô Địch', amount: '5.000.000đ', desc: 'Mỗi hạng cân' },
-    silver: { title: 'Á Quân', amount: '3.000.000đ', desc: 'Mỗi hạng cân' },
-    bronze: { title: 'Hạng Ba', amount: '1.500.000đ', desc: 'Mỗi hạng cân' }
-  },
-  events: [
-    { id: 1, name: 'SQUAT', icon: '🦵', desc: 'Bài thi đòi hỏi sức mạnh đùi và lưng dưới. VĐV phải xuống thấp qua song song và đứng lên hoàn toàn.' },
-    { id: 2, name: 'BENCH PRESS', icon: '💪', desc: 'Bài thi sức mạnh ngực và tay. VĐV nằm ngửa, hạ tạ xuống ngực và đẩy lên thẳng tay.' },
-    { id: 3, name: 'DEADLIFT', icon: '🏋️', desc: 'Bài thi tổng hợp sức mạnh toàn thân. VĐV nâng tạ từ sàn lên tư thế đứng thẳng hoàn toàn.' }
-  ],
-  beginnerRoadmap: [
-    { id: 1, week: 'Tuần 1–2', title: 'Nền Tảng Kỹ Thuật', content: 'Học và luyện kỹ thuật cơ bản cho cả 3 bài. Trọng lượng nhẹ, tập trung form. 3 buổi/tuần.' },
-    { id: 2, week: 'Tuần 3–4', title: 'Xây Nền Sức Mạnh', content: 'Tăng dần trọng lượng 5–10% mỗi tuần. Thêm các bài phụ trợ: Romanian Deadlift, Paused Squat.' },
-    { id: 3, week: 'Tuần 5–6', title: 'Tập Ngưỡng Cao', content: 'Tăng cường độ lên 80–90% 1RM. Làm quen với cảm giác tải nặng.' },
-    { id: 4, week: 'Tuần 7–8', title: 'Peaking & Thử Mức', content: 'Giảm khối lượng, tăng cường độ. Thử 1RM. Chuẩn bị openers cho ngày thi đấu.' }
-  ],
-  tournamentRoadmap: [
-    { id: 1, week: 'Tuần 1–2', title: 'Nền Tảng', content: 'Ôn luyện kỹ thuật, đặt trọng lượng opener hợp lý for từng bài.' },
-    { id: 2, week: 'Tuần 3–4', title: 'Accumulation', content: 'Tăng khối lượng tập, 3–5 set x 3–5 reps ở 75–80% 1RM.' },
-    { id: 3, week: 'Tuần 5–6', title: 'Intensification', content: 'Giảm số set, tăng % tạ lên 85–92%. Tập kỹ với lệnh trọng tài.' },
-    { id: 4, week: 'Tuần 7', title: 'Peaking', content: 'Test mức tạ opener, secondary, thứ 3. Nghỉ đủ giấc, tối ưu dinh dưỡng.' },
-    { id: 5, week: 'Tuần 8', title: 'Deload & Thi đấu', content: 'Tập nhẹ 2–3 ngày đầu, dừng 2–3 ngày trước thi. Ngủ đủ, cân nước hợp lý.' }
-  ],
-  videos: [
-    { id: 1, name: 'Kỹ thuật Squat cơ bản', url: 'https://www.youtube.com/embed/bEv6CCg2BC8', localBlob: null, tags: ['Squat', 'Lộ trình tập cho người mới'], views: 0 },
-    { id: 2, name: 'Kỹ thuật Bench Press cơ bản', url: 'https://www.youtube.com/embed/rT7DgCr-3pg', localBlob: null, tags: ['Bench Press', 'Lộ trình tập cho người mới'], views: 0 },
-    { id: 3, name: 'Kỹ thuật Deadlift cơ bản', url: 'https://www.youtube.com/embed/op9kVnSso6Q', localBlob: null, tags: ['Deadlift', 'Lộ trình tập cho người mới'], views: 0 },
-    { id: 4, name: 'Dinh dưỡng cho Powerlifter', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ', localBlob: null, tags: ['Dinh dưỡng'], views: 0 }
-  ],
-  news: [
-    { id: 1, title: 'Mở Đăng Ký Chính Thức Powerlifting Championship 2026', cat: 'THÔNG BÁO', desc: 'Đăng ký tham dự giải đấu Powerlifting lớn nhất Hà Nội từ ngày 01/06/2026. Deadline: 10/08/2026.', fullContent: 'Ban tổ chức giải Powerlifting Championship 2026 chính thức mở đăng ký tham dự.\n\nThời gian đăng ký: 01/06/2026 – 10/08/2026\nĐịa điểm thi đấu: Nhà thi đấu tỉnh, Hà Nội\n\nCác hạng cân: 59, 66, 74, 83, 93, 105, 120 và +120kg.\nĐối tượng: Tất cả VĐV từ 16 tuổi trở lên.\n\nVui lòng điền form đăng ký và chờ xác nhận từ BTC.', date: '28/05/2026', featured: true, image: '', views: 0 },
-    { id: 2, title: 'Kết Quả Giải Powerlifting Mùa Xuân 2026', cat: 'KẾT QUẢ', desc: 'Nguyễn Văn A xuất sắc giành danh hiệu Best Lifter với tổng tạ 750kg ở hạng 83kg.', fullContent: 'Giải Powerlifting Mùa Xuân 2026 đã khép lại thành công.\n\nKết quả nổi bật:\n• Best Lifter: Nguyễn Văn A — Total 750kg (hạng 83kg)\n• Vô địch hạng 66kg: Trần Văn C — Total 520kg\n• Vô địch hạng 74kg: Lê Văn D — Total 610kg\n\nChúc mừng tất cả các VĐV đã thi đấu xuất sắc!', date: '15/03/2026', featured: false, image: '', views: 0 },
-    { id: 3, title: 'Gặp Gỡ Trần Thị B – VĐV Nữ Đầy Triển Vọng', cat: 'VĐV NỔI BẬT', desc: 'Từ người mới bắt đầu năm 2024, Trần Thị B đã trở thành gương mặt nổi bật của Powerlifting Hà Nội.', fullContent: 'Trần Thị B bắt đầu tập luyện Powerlifting từ tháng 3/2024.\n\nChỉ sau 2 năm, cô đã đạt được:\n• Total: 320kg ở hạng 57kg\n• Best Squat: 130kg\n• Best Bench: 65kg\n• Best Deadlift: 145kg\n\n"Powerlifting đã thay đổi cuộc sống của tôi hoàn toàn. Tôi tự tin hơn và khoẻ mạnh hơn bao giờ hết" — Trần Thị B chia sẻ.', date: '10/04/2026', featured: false, image: '', views: 0 },
-    { id: 4, title: '5 Lỗi Kỹ Thuật Phổ Biến Người Mới Hay Mắc Phải', cat: 'HƯỚNG DẪN', desc: 'Tổng hợp từ các HLV — tránh những lỗi này để tiến bộ nhanh hơn và tránh chấn thương.', fullContent: '1. Squat: Gối đẩy vào trong (knee cave) — Hãy tập trung đẩy gối ra ngoài theo hướng bàn chân.\n\n2. Bench Press: Không rút vai (retract scapula) — Kéo 2 xương bả vai lại gần nhau trước khi nằm.\n\n3. Deadlift: Lưng tròn — Giữ lưng trung tính, siết core trước khi kéo.\n\n4. Không warm-up kỹ — Luôn warm-up với tạ nhẹ trước khi vào set nặng.\n\n5. Tăng tạ quá nhanh — Tuân thủ chương trình, tăng 2.5–5kg mỗi tuần là đủ.', date: '05/05/2026', featured: false, image: '', views: 0 }
-  ]
-};
+  // ── SPA fallback ────────────────────────────────────────────────────────────
+  app.get('*', (_req, res) => res.sendFile(path.join(clientPath, 'index.html')));
 
-async function seedDefaultData() {
-  try {
-    const { videos, news, ...appDataCore } = defaultData;
-
-    let dataExists = await AppData.findOne({ key: 'main' });
-    if (!dataExists) {
-      await AppData.create({ key: 'main', ...appDataCore });
-      console.log('Default application data seeded successfully.');
-    } else {
-      if (dataExists.infoTimeSub === undefined) {
-        await AppData.updateOne({ key: 'main' }, {
-          $set: {
-            infoTimeSub: defaultData.infoTimeSub,
-            infoLocationSub: defaultData.infoLocationSub,
-            infoWeightClass: defaultData.infoWeightClass,
-            infoWeightClassSub: defaultData.infoWeightClassSub,
-            infoTarget: defaultData.infoTarget,
-            infoTargetSub: defaultData.infoTargetSub
-          }
-        });
-        console.log('Migrated new info card fields into database.');
-      }
-      if (dataExists.images && dataExists.images.heroBg === '/images/hero-bg.png') {
-        dataExists.images.heroBg = '/images/hero-bg-v2.png';
-        await AppData.updateOne({ key: 'main' }, { $set: { images: dataExists.images } });
-        console.log('Migrated hero background image to v2 in database.');
-      }
-    }
-
-    // Seed Videos
-    const videoCount = await Video.countDocuments();
-    if (videoCount === 0) {
-      await Video.insertMany(videos);
-      console.log('Default videos seeded.');
-    } else {
-      if (dataExists && dataExists.videos && dataExists.videos.length > 0) {
-        await Video.insertMany(dataExists.videos.map(v => ({ ...v, views: 0 })));
-        await AppData.updateOne({ key: 'main' }, { $unset: { videos: 1 } });
-        console.log('Migrated videos from AppData to Video collection.');
-      }
-    }
-
-    // Seed News
-    const newsCount = await News.countDocuments();
-    if (newsCount === 0) {
-      await News.insertMany(news);
-      console.log('Default news seeded.');
-    } else {
-       if (dataExists && dataExists.news && dataExists.news.length > 0) {
-        await News.insertMany(dataExists.news.map(n => ({ ...n, views: 0 })));
-        await AppData.updateOne({ key: 'main' }, { $unset: { news: 1 } });
-        console.log('Migrated news from AppData to News collection.');
-      }
-    }
-  } catch (error) {
-    console.error('Error seeding default data:', error.message);
-  }
-}
-
-// Routes registration
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/data', require('./routes/data'));
-app.use('/api/videos', require('./routes/videos'));
-app.use('/api/news', require('./routes/news'));
-app.use('/api/views', require('./routes/views'));
-
-// Catch-all route to serve client SPA index.html
-app.get('*', (req, res) => {
-  res.sendFile(path.join(clientPath, 'index.html'));
-});
-
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
 });
