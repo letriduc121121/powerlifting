@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useApp } from "../context/AppContext";
 import { newsAPI } from "../services/api";
+import Pagination from "./Pagination";
 
 const CATEGORIES = ["Tất cả", "THÔNG BÁO", "KẾT QUẢ", "VĐV NỔI BẬT", "HƯỚNG DẪN", "SỰ KIỆN"];
 const NEWS_PER_PAGE = 6;
@@ -135,19 +136,16 @@ export default function News() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="pagination-wrap reveal" style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 32 }}>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                className={`page-btn${p === page ? " active" : ""}`}
-                onClick={() => setPage(p)}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        )}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={NEWS_PER_PAGE}
+          onChange={(p) => {
+            setPage(p);
+            document.getElementById("tin-tuc")?.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
       </div>
     </section>
   );

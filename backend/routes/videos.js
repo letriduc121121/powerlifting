@@ -8,7 +8,7 @@ const authenticateAdmin = require('../middleware/auth');
 // Get All Videos
 router.get('/', async (req, res) => {
   try {
-    const videos = await Video.find({}).sort({ id: 1 });
+    const videos = await Video.find({}).sort({ id: 1 }).lean();
     res.json({ success: true, data: videos });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching videos' });

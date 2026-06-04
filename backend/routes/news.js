@@ -8,7 +8,7 @@ const authenticateAdmin = require('../middleware/auth');
 // Get All News
 router.get('/', async (req, res) => {
   try {
-    const news = await News.find({}).sort({ id: 1 });
+    const news = await News.find({}).sort({ id: 1 }).lean();
     res.json({ success: true, data: news });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching news' });

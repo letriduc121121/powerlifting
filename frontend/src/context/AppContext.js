@@ -93,16 +93,21 @@ export function AppProvider({ children }) {
     if (state.token) {
       dispatch({ type: "LOGIN", payload: state.token });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Gắn class lên <body> để CSS hiện/ẩn các nút chỉnh sửa của admin.
+  useEffect(() => {
+    document.body.classList.toggle("admin-logged", state.isAdmin);
+  }, [state.isAdmin]);
 
   // Actions
   const actions = {
     login: async (username, password) => {
-      const res = await authAPI.login(username, password);
-      const { token } = res.data;
+      const { token } = await authAPI.login(username, password); // backend: { success, token }
       localStorage.setItem("pl_token", token);
       dispatch({ type: "LOGIN", payload: token });
-      return res.data;
+      return token;
     },
 
     logout: async () => {

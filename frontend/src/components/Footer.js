@@ -12,8 +12,8 @@ const NAV_LINKS = [
 ];
 
 export default function Footer() {
-  const { state } = useApp();
-  const { images } = state;
+  const { state, actions } = useApp();
+  const { images, isAdmin } = state;
 
   const handleNavClick = (e, href) => {
     e.preventDefault();
@@ -100,6 +100,20 @@ export default function Footer() {
 
         <div className="footer-bottom">
           <p>© 2026 Powerlifting Championship Hà Nội. Mọi quyền được bảo lưu.</p>
+          <div className="footer-legal">
+            {isAdmin ? (
+              <button className="footer-admin-link" onClick={actions.logout}>
+                Đăng xuất
+              </button>
+            ) : (
+              <button
+                className="footer-admin-link"
+                onClick={() => actions.openModal("login")}
+              >
+                Quyền admin
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </footer>

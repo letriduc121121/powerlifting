@@ -1,29 +1,28 @@
-import { useAppContext } from "../context/AppContext";
+import { useState, useEffect } from "react";
+import { useApp } from "../context/AppContext";
+import { eventAPI, roadmapAPI, videoAPI, newsAPI, prizeAPI } from "../services/api";
 
-// ─── Reusable Modal Shell ──────────────────────────────────────────────────────
-function ModalShell({ id, children, maxWidth = 500 }) {
-  const { closeModal, openModalId } = useAppContext();
-  if (openModalId !== id) return null;
-  return (
-    <div className="modal-overlay" id={id} onClick={() => closeModal(id)}>
-      <div
-        className="modal"
-        style={{ maxWidth }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {children}
-      </div>
-    </div>
-  );
+// Thêm class `.open` ngay sau khi mount để kích hoạt hiệu ứng fade/scale vào.
+function useOpenTransition() {
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(true), []);
+  return open;
 }
 
-function ModalHeader({ title, onClose }) {
+// ─── Reusable Modal Shell ──────────────────────────────────────────────────────
+// Hiển thị overlay khi modal đang mở (state.modal === name). Click nền hoặc nút ✕ để đóng.
+function ModalShell({ name, title, maxWidth = 500, children }) {
+  const { actions } = useApp();
+  const open = useOpenTransition();
   return (
-    <div className="modal-header">
-      <h3>{title}</h3>
-      <button className="modal-close" onClick={onClose}>
-        ✕
-      </button>
+    <div className={`modal-overlay${open ? " open" : ""}`} onClick={() => actions.closeModal()}>
+      <div className="modal" style={{ maxWidth }} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>{title}</h3>
+          <button className="modal-close" onClick={() => actions.closeModal()}>✕</button>
+        </div>
+        {children}
+      </div>
     </div>
   );
 }
@@ -34,42 +33,40 @@ function ModalFooter({ children }) {
 
 // ─── 1. News Detail Popup ──────────────────────────────────────────────────────
 export function NewsDetailModal() {
-  const { newsDetailItem, closeNewsDetail } = useAppContext();
-  if (!newsDetailItem) return null;
-  const { img, cat, title, date, views, desc, content } = newsDetailItem;
+  const { state } = useApp();
+  if (state.modal !== "newsDetail" || !state.modalData?.news) return null;
+  return <NewsDetailView item={state.modalData.news} />;
+}
+
+function NewsDetailView({ item }) {
+  const { actions } = useApp();
+  const open = useOpenTransition();
+  const dateStr = item.createdAt
+    ? new Date(item.createdAt).toLocaleDateString("vi-VN")
+    : "";
+
   return (
     <div
-      className="news-detail-overlay"
+      className={`news-detail-overlay${open ? " open" : ""}`}
       id="newsDetailOverlay"
       onClick={(e) => {
-        if (e.target.id === "newsDetailOverlay") closeNewsDetail();
+        if (e.target.id === "newsDetailOverlay") actions.closeModal();
       }}
     >
       <div className="news-detail-popup" id="newsDetailPopup">
-        <button className="ndp-close" onClick={closeNewsDetail}>
-          ✕
-        </button>
+        <button className="ndp-close" onClick={() => actions.closeModal()}>✕</button>
         <div
           className="ndp-img"
-          id="ndpImg"
-          style={img ? { backgroundImage: `url(${img})` } : undefined}
+          style={item.image ? { backgroundImage: `url(${item.image})` } : undefined}
         />
         <div className="ndp-body">
-          <span className="ndp-cat" id="ndpCat">
-            {cat || "THÔNG BÁO"}
+          <span className="ndp-cat">{item.category || "THÔNG BÁO"}</span>
+          <h2>{item.title}</h2>
+          <span className="ndp-date">
+            📅 {dateStr} | 👁️ {item.views ?? 0} lượt xem
           </span>
-          <h2 id="ndpTitle">{title}</h2>
-          <span className="ndp-date" id="ndpDate">
-            📅 {date} | 👁️ {views ?? 0} lượt xem
-          </span>
-          {desc && (
-            <div className="ndp-desc-quote" id="ndpDescQuote">
-              {desc}
-            </div>
-          )}
-          <div className="ndp-content" id="ndpContent">
-            {content || "Nội dung chi tiết..."}
-          </div>
+          {item.desc && <div className="ndp-desc-quote">{item.desc}</div>}
+          <div className="ndp-content">{item.fullContent || "Nội dung chi tiết..."}</div>
         </div>
       </div>
     </div>
@@ -78,109 +75,83 @@ export function NewsDetailModal() {
 
 // ─── 2. Login Admin Modal ──────────────────────────────────────────────────────
 export function LoginModal() {
-  const { closeModal, doLogin, loginError } = useAppContext();
+  const { state } = useApp();
+  if (state.modal !== "login") return null;
+  return <LoginForm />;
+}
+
+function LoginForm() {
+  const { actions } = useApp();
+  const [error, setError] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    try {
+      await actions.login(e.target.username.value, e.target.password.value);
+      actions.closeModal();
+    } catch (_) {
+      setError(true);
+    }
+  };
+
   return (
-    <ModalShell id="loginModal" maxWidth={360}>
-      <ModalHeader
-        title="Đăng Nhập Admin"
-        onClose={() => closeModal("loginModal")}
-      />
-      <form
-        id="loginForm"
-        onSubmit={(e) => {
-          e.preventDefault();
-          doLogin(
-            e.target.username.value,
-            e.target.password.value
-          );
-        }}
-        autoComplete="on"
-      >
+    <ModalShell name="login" title="Đăng Nhập Admin" maxWidth={360}>
+      <form onSubmit={submit} autoComplete="on">
         <div className="modal-body">
           <div className="form-group">
             <label>Tên đăng nhập</label>
-            <input
-              type="text"
-              name="username"
-              autoComplete="username"
-              placeholder="Tên đăng nhập..."
-            />
+            <input type="text" name="username" autoComplete="username" placeholder="Tên đăng nhập..." />
           </div>
           <div className="form-group">
             <label>Mật khẩu</label>
-            <input
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              placeholder="Mật khẩu..."
-            />
+            <input type="password" name="password" autoComplete="current-password" placeholder="Mật khẩu..." />
           </div>
-          {loginError && (
+          {error && (
             <p style={{ color: "#ea4335", fontSize: "0.85rem", margin: "0 0 10px" }}>
               Tài khoản hoặc mật khẩu không chính xác!
             </p>
           )}
         </div>
         <ModalFooter>
-          <button type="submit" className="btn btn-primary">
-            Đăng Nhập
-          </button>
+          <button type="submit" className="btn btn-primary">Đăng Nhập</button>
         </ModalFooter>
       </form>
     </ModalShell>
   );
 }
 
-// ─── 3. Edit Hero Field Modal ──────────────────────────────────────────────────
-export function HeroFieldModal() {
-  const { closeModal, heroFieldModal, saveHeroField } = useAppContext();
-  if (!heroFieldModal) return null;
-  const { title, fieldKey, isTextarea, currentValue } = heroFieldModal;
-  let localValue = currentValue;
+// ─── 3. Edit Field Modal (hero / thông tin giải đấu) ───────────────────────────
+export function EditFieldModal() {
+  const { state } = useApp();
+  if (state.modal !== "editField") return null;
+  return <EditFieldForm data={state.modalData || {}} />;
+}
+
+function EditFieldForm({ data }) {
+  const { actions } = useApp();
+  const { key, title, value, isTextarea } = data;
+  const [val, setVal] = useState(value || "");
+
+  const save = async () => {
+    await actions.updateConfig(key, val);
+    actions.closeModal();
+  };
+
   return (
-    <ModalShell id="heroFieldModal" maxWidth={400}>
-      <ModalHeader title={title} onClose={() => closeModal("heroFieldModal")} />
+    <ModalShell name="editField" title={title || "Chỉnh sửa"} maxWidth={400}>
       <div className="modal-body">
         <div className="form-group">
           <label>Giá trị mới</label>
           {isTextarea ? (
-            <textarea
-              rows={8}
-              defaultValue={currentValue}
-              onChange={(e) => (localValue = e.target.value)}
-              style={{
-                width: "100%",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                padding: 10,
-                fontFamily: "var(--font-body)",
-                fontSize: "0.95rem",
-                lineHeight: 1.6,
-                resize: "vertical",
-              }}
-            />
+            <textarea rows={8} value={val} onChange={(e) => setVal(e.target.value)} />
           ) : (
-            <input
-              type="text"
-              defaultValue={currentValue}
-              onChange={(e) => (localValue = e.target.value)}
-            />
+            <input type="text" value={val} onChange={(e) => setVal(e.target.value)} />
           )}
         </div>
       </div>
       <ModalFooter>
-        <button
-          className="btn btn-ghost-sm"
-          onClick={() => closeModal("heroFieldModal")}
-        >
-          Hủy
-        </button>
-        <button
-          className="btn btn-primary"
-          onClick={() => saveHeroField(fieldKey, localValue)}
-        >
-          Lưu
-        </button>
+        <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
+        <button className="btn btn-primary" onClick={save}>Lưu</button>
       </ModalFooter>
     </ModalShell>
   );
@@ -188,54 +159,49 @@ export function HeroFieldModal() {
 
 // ─── 4. Add/Edit Event Modal ───────────────────────────────────────────────────
 export function AddEventModal() {
-  const { closeModal, saveEvent, editingEvent } = useAppContext();
-  const isEdit = !!editingEvent;
-  let form = { name: editingEvent?.name || "", icon: editingEvent?.icon || "", desc: editingEvent?.desc || "" };
+  const { state } = useApp();
+  if (state.modal !== "addEvent") return null;
+  return <AddEventForm data={state.modalData || {}} />;
+}
+
+function AddEventForm({ data }) {
+  const { actions } = useApp();
+  const { editItem, onSaved } = data;
+  const isEdit = !!editItem;
+  const [form, setForm] = useState({
+    name: editItem?.name || "",
+    icon: editItem?.icon || "",
+    desc: editItem?.desc || "",
+  });
+
+  const save = async () => {
+    if (isEdit) await eventAPI.update(editItem._id || editItem.id, form);
+    else await eventAPI.create(form);
+    onSaved?.();
+    actions.closeModal();
+  };
+
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
+
   return (
-    <ModalShell id="addEventModal">
-      <ModalHeader
-        title={isEdit ? "Chỉnh Sửa Nội Dung" : "Thêm Nội Dung Thi Đấu"}
-        onClose={() => closeModal("addEventModal")}
-      />
+    <ModalShell name="addEvent" title={isEdit ? "Chỉnh Sửa Nội Dung" : "Thêm Nội Dung Thi Đấu"}>
       <div className="modal-body">
         <div className="form-group">
           <label>Tên bài thi</label>
-          <input
-            type="text"
-            id="evName"
-            defaultValue={form.name}
-            placeholder="Ví dụ: SQUAT"
-            onChange={(e) => (form.name = e.target.value)}
-          />
+          <input type="text" value={form.name} placeholder="Ví dụ: SQUAT" onChange={set("name")} />
         </div>
         <div className="form-group">
           <label>Biểu tượng (emoji)</label>
-          <input
-            type="text"
-            id="evIcon"
-            defaultValue={form.icon}
-            placeholder="Ví dụ: 🦵"
-            onChange={(e) => (form.icon = e.target.value)}
-          />
+          <input type="text" value={form.icon} placeholder="Ví dụ: 🦵" onChange={set("icon")} />
         </div>
         <div className="form-group">
           <label>Mô tả chi tiết</label>
-          <textarea
-            id="evDesc"
-            rows={3}
-            defaultValue={form.desc}
-            placeholder="Mô tả kỹ thuật bài thi..."
-            onChange={(e) => (form.desc = e.target.value)}
-          />
+          <textarea rows={3} value={form.desc} placeholder="Mô tả kỹ thuật bài thi..." onChange={set("desc")} />
         </div>
       </div>
       <ModalFooter>
-        <button className="btn btn-ghost-sm" onClick={() => closeModal("addEventModal")}>
-          Hủy
-        </button>
-        <button className="btn btn-primary" onClick={() => saveEvent(form)}>
-          Lưu
-        </button>
+        <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
+        <button className="btn btn-primary" onClick={save}>Lưu</button>
       </ModalFooter>
     </ModalShell>
   );
@@ -243,79 +209,58 @@ export function AddEventModal() {
 
 // ─── 5. Add/Edit Roadmap Modal ─────────────────────────────────────────────────
 export function AddRoadmapModal() {
-  const { closeModal, saveRoadmap, editingRoadmap } = useAppContext();
-  const isEdit = !!editingRoadmap;
-  let form = {
-    weekStart: editingRoadmap?.weekStart || "",
-    weekEnd: editingRoadmap?.weekEnd || "",
-    title: editingRoadmap?.title || "",
-    content: editingRoadmap?.content || "",
-    type: editingRoadmap?.type || "tournament",
+  const { state } = useApp();
+  if (state.modal !== "addRoadmap") return null;
+  return <AddRoadmapForm data={state.modalData || {}} />;
+}
+
+function AddRoadmapForm({ data }) {
+  const { actions } = useApp();
+  const { editItem, onSaved, type = "tournament" } = data;
+  const isEdit = !!editItem;
+  const [form, setForm] = useState({
+    weekStart: editItem?.weekStart || "",
+    weekEnd: editItem?.weekEnd || "",
+    title: editItem?.title || "",
+    content: editItem?.content || "",
+    type: editItem?.type || type,
+  });
+
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
+
+  const save = async () => {
+    if (isEdit) await roadmapAPI.update(editItem._id || editItem.id, form);
+    else await roadmapAPI.create(form);
+    onSaved?.();
+    actions.closeModal();
   };
+
   return (
-    <ModalShell id="addRoadmapModal">
-      <ModalHeader
-        title={isEdit ? "Chỉnh Sửa Lộ Trình" : "Thêm Lộ Trình"}
-        onClose={() => closeModal("addRoadmapModal")}
-      />
+    <ModalShell name="addRoadmap" title={isEdit ? "Chỉnh Sửa Lộ Trình" : "Thêm Lộ Trình"}>
       <div className="modal-body">
         <div className="form-group">
           <label>Khoảng thời gian (Tuần)</label>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "var(--font-cond)", fontWeight: 700, fontSize: "0.95rem" }}>
-              Tuần
-            </span>
-            <input
-              type="number"
-              id="rmWeekStart"
-              min={1}
-              max={99}
-              placeholder="Từ"
-              defaultValue={form.weekStart}
-              style={{ width: 80 }}
-              onChange={(e) => (form.weekStart = e.target.value)}
-            />
-            <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>đến</span>
-            <input
-              type="number"
-              id="rmWeekEnd"
-              min={1}
-              max={99}
-              placeholder="Đến (Tùy chọn)"
-              defaultValue={form.weekEnd}
-              style={{ width: 100 }}
-              onChange={(e) => (form.weekEnd = e.target.value)}
-            />
+            <span style={{ fontWeight: 700 }}>Tuần</span>
+            <input type="number" min={1} max={99} placeholder="Từ" value={form.weekStart}
+              style={{ width: 80 }} onChange={set("weekStart")} />
+            <span style={{ color: "var(--text-muted)" }}>đến</span>
+            <input type="number" min={1} max={99} placeholder="Đến (Tùy chọn)" value={form.weekEnd}
+              style={{ width: 100 }} onChange={set("weekEnd")} />
           </div>
         </div>
         <div className="form-group">
           <label>Tiêu đề bài học</label>
-          <input
-            type="text"
-            id="rmTitle"
-            defaultValue={form.title}
-            placeholder="Ví dụ: Kỹ thuật căn bản"
-            onChange={(e) => (form.title = e.target.value)}
-          />
+          <input type="text" value={form.title} placeholder="Ví dụ: Kỹ thuật căn bản" onChange={set("title")} />
         </div>
         <div className="form-group">
           <label>Nội dung lộ trình</label>
-          <textarea
-            id="rmContent"
-            rows={4}
-            defaultValue={form.content}
-            placeholder="Mô tả chi tiết giáo án tập luyện..."
-            onChange={(e) => (form.content = e.target.value)}
-          />
+          <textarea rows={4} value={form.content} placeholder="Mô tả chi tiết giáo án tập luyện..." onChange={set("content")} />
         </div>
       </div>
       <ModalFooter>
-        <button className="btn btn-ghost-sm" onClick={() => closeModal("addRoadmapModal")}>
-          Hủy
-        </button>
-        <button className="btn btn-primary" onClick={() => saveRoadmap(form)}>
-          Lưu
-        </button>
+        <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
+        <button className="btn btn-primary" onClick={save}>Lưu</button>
       </ModalFooter>
     </ModalShell>
   );
@@ -323,172 +268,92 @@ export function AddRoadmapModal() {
 
 // ─── 6. Add/Edit Video Modal ───────────────────────────────────────────────────
 export function AddVideoModal() {
-  const { closeModal, saveVideo, editingVideo } = useAppContext();
-  const isEdit = !!editingVideo;
-  const [videoTab, setVideoTab] = useState_("url");
-  const [tags, setTags] = useState_([...(editingVideo?.tags || [])]);
-  const [tagInput, setTagInput] = useState_("");
-  const [thumbnailPreview, setThumbnailPreview] = useState_(editingVideo?.thumbnail || "");
+  const { state } = useApp();
+  if (state.modal !== "addVideo") return null;
+  return <AddVideoForm data={state.modalData || {}} />;
+}
 
-  let form = {
-    name: editingVideo?.name || "",
-    url: editingVideo?.url || "",
-    localFile: null,
-    thumbnail: editingVideo?.thumbnail || "",
-    tags,
-  };
+function AddVideoForm({ data }) {
+  const { actions } = useApp();
+  const { editItem, onSaved } = data;
+  const isEdit = !!editItem;
 
-  const handleTagKey = (e) => {
+  const [form, setForm] = useState({
+    name: editItem?.name || "",
+    url: editItem?.url || "",
+    thumbnail: editItem?.thumbnail || "",
+    tags: [...(editItem?.tags || [])],
+  });
+  const [tagInput, setTagInput] = useState("");
+
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const addTag = (e) => {
     if (e.key === "Enter" && tagInput.trim()) {
-      const newTag = tagInput.trim();
-      if (!tags.includes(newTag)) {
-        const updated = [...tags, newTag];
-        setTags(updated);
-        form.tags = updated;
-      }
+      e.preventDefault();
+      const tag = tagInput.trim();
+      if (!form.tags.includes(tag)) setForm((f) => ({ ...f, tags: [...f.tags, tag] }));
       setTagInput("");
     }
   };
 
-  const removeTag = (t) => {
-    const updated = tags.filter((x) => x !== t);
-    setTags(updated);
-    form.tags = updated;
+  const removeTag = (t) =>
+    setForm((f) => ({ ...f, tags: f.tags.filter((x) => x !== t) }));
+
+  const onThumb = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setForm((f) => ({ ...f, thumbnail: ev.target.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const save = async () => {
+    if (isEdit) await videoAPI.update(editItem._id || editItem.id, form);
+    else await videoAPI.create(form);
+    onSaved?.();
+    actions.closeModal();
   };
 
   return (
-    <ModalShell id="addVideoModal">
-      <ModalHeader
-        title={isEdit ? "Chỉnh Sửa Video" : "Thêm Video Hướng Dẫn"}
-        onClose={() => closeModal("addVideoModal")}
-      />
+    <ModalShell name="addVideo" title={isEdit ? "Chỉnh Sửa Video" : "Thêm Video Hướng Dẫn"}>
       <div className="modal-body">
         <div className="form-group">
           <label>Tên video</label>
-          <input
-            type="text"
-            id="vName"
-            defaultValue={form.name}
-            placeholder="Tên bài hướng dẫn..."
-            onChange={(e) => (form.name = e.target.value)}
-          />
+          <input type="text" value={form.name} placeholder="Tên bài hướng dẫn..." onChange={set("name")} />
         </div>
         <div className="form-group">
-          <label>Nguồn Video</label>
-          <div className="tab-btns">
-            <button
-              className={`tab-btn${videoTab === "url" ? " active" : ""}`}
-              onClick={() => setVideoTab("url")}
-            >
-              URL (YouTube / Vimeo)
-            </button>
-            <button
-              className={`tab-btn${videoTab === "local" ? " active" : ""}`}
-              onClick={() => setVideoTab("local")}
-            >
-              Tải lên file video
-            </button>
-          </div>
-          {videoTab === "url" ? (
-            <div className="video-src-panel active">
-              <input
-                type="text"
-                id="vUrl"
-                defaultValue={form.url}
-                placeholder="Ví dụ: https://www.youtube.com/watch?v=..."
-                onChange={(e) => (form.url = e.target.value)}
-              />
-              <p className="file-note">
-                Hỗ trợ: YouTube, Vimeo, Google Drive.
-              </p>
-            </div>
-          ) : (
-            <div className="video-src-panel active">
-              <input
-                type="file"
-                id="vFile"
-                accept="video/*"
-                onChange={(e) => (form.localFile = e.target.files[0])}
-              />
-              <p className="file-note">
-                Chọn file video từ thiết bị của bạn.
-              </p>
-            </div>
-          )}
+          <label>URL Video (YouTube / Vimeo / Drive)</label>
+          <input type="text" value={form.url} placeholder="https://www.youtube.com/watch?v=..." onChange={set("url")} />
         </div>
         <div className="form-group">
-          <label>Ảnh thumbnail</label>
-          <input
-            type="file"
-            id="vThumbnail"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                  setThumbnailPreview(ev.target.result);
-                  form.thumbnail = ev.target.result;
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
-          />
-          <p className="file-note">Tùy chọn. Nếu để trống sẽ dùng ảnh YouTube mặc định.</p>
-          {thumbnailPreview && (
-            <img
-              src={thumbnailPreview}
-              alt="Thumbnail Preview"
-              className="news-img-preview"
-              style={{ display: "block" }}
-            />
+          <label>Ảnh thumbnail (tùy chọn)</label>
+          <input type="file" accept="image/*" onChange={onThumb} />
+          <p className="file-note">Để trống sẽ dùng ảnh YouTube mặc định.</p>
+          {form.thumbnail && (
+            <img src={form.thumbnail} alt="Thumbnail" className="news-img-preview" style={{ display: "block" }} />
           )}
         </div>
         <div className="form-group">
           <label>Tags danh mục (Gõ rồi nhấn Enter)</label>
-          <div className="tags-input-wrap" id="tagsWrap">
-            {tags.map((t) => (
-              <span
-                key={t}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                  background: "var(--blue)",
-                  color: "#fff",
-                  borderRadius: 4,
-                  padding: "2px 8px",
-                  fontSize: "0.82rem",
-                  margin: "2px",
-                }}
-              >
+          <div className="tags-input-wrap">
+            {form.tags.map((t) => (
+              <span key={t} style={{
+                display: "inline-flex", alignItems: "center", gap: 4, background: "var(--blue)",
+                color: "#fff", borderRadius: 4, padding: "2px 8px", fontSize: "0.82rem", margin: 2,
+              }}>
                 {t}
-                <span
-                  style={{ cursor: "pointer", marginLeft: 2 }}
-                  onClick={() => removeTag(t)}
-                >
-                  ✕
-                </span>
+                <span style={{ cursor: "pointer" }} onClick={() => removeTag(t)}>✕</span>
               </span>
             ))}
-            <input
-              type="text"
-              id="tagInput"
-              value={tagInput}
-              placeholder="Thêm tag..."
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleTagKey}
-            />
+            <input type="text" value={tagInput} placeholder="Thêm tag..."
+              onChange={(e) => setTagInput(e.target.value)} onKeyDown={addTag} />
           </div>
         </div>
       </div>
       <ModalFooter>
-        <button className="btn btn-ghost-sm" onClick={() => closeModal("addVideoModal")}>
-          Hủy
-        </button>
-        <button className="btn btn-primary" onClick={() => saveVideo(form)}>
-          Lưu Video
-        </button>
+        <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
+        <button className="btn btn-primary" onClick={save}>Lưu Video</button>
       </ModalFooter>
     </ModalShell>
   );
@@ -496,37 +361,53 @@ export function AddVideoModal() {
 
 // ─── 7. Add/Edit News Modal ────────────────────────────────────────────────────
 export function AddNewsModal() {
-  const { closeModal, saveNews, editingNews } = useAppContext();
-  const isEdit = !!editingNews;
-  const [imgPreview, setImgPreview] = useState_(editingNews?.img || "");
-  let form = {
-    title: editingNews?.title || "",
-    cat: editingNews?.cat || "THÔNG BÁO",
-    desc: editingNews?.desc || "",
-    fullContent: editingNews?.fullContent || "",
-    img: editingNews?.img || "",
-    featured: editingNews?.featured || 0,
+  const { state } = useApp();
+  if (state.modal !== "addNews") return null;
+  return <AddNewsForm data={state.modalData || {}} />;
+}
+
+function AddNewsForm({ data }) {
+  const { actions } = useApp();
+  const { editItem, onSaved } = data;
+  const isEdit = !!editItem;
+
+  const [form, setForm] = useState({
+    title: editItem?.title || "",
+    category: editItem?.category || "THÔNG BÁO",
+    desc: editItem?.desc || "",
+    fullContent: editItem?.fullContent || "",
+    image: editItem?.image || "",
+    featured: editItem?.featured || 0,
+  });
+
+  const set = (key, transform = (v) => v) => (e) =>
+    setForm((f) => ({ ...f, [key]: transform(e.target.value) }));
+
+  const onImage = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setForm((f) => ({ ...f, image: ev.target.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const save = async () => {
+    if (isEdit) await newsAPI.update(editItem._id || editItem.id, form);
+    else await newsAPI.create(form);
+    onSaved?.();
+    actions.closeModal();
   };
 
   return (
-    <ModalShell id="addNewsModal">
-      <ModalHeader
-        title={isEdit ? "Chỉnh Sửa Tin Tức" : "Thêm Tin Tức Mới"}
-        onClose={() => closeModal("addNewsModal")}
-      />
+    <ModalShell name="addNews" title={isEdit ? "Chỉnh Sửa Tin Tức" : "Thêm Tin Tức Mới"}>
       <div className="modal-body">
         <div className="form-group">
           <label>Tiêu đề bài viết</label>
-          <input
-            type="text"
-            defaultValue={form.title}
-            placeholder="Tiêu đề..."
-            onChange={(e) => (form.title = e.target.value)}
-          />
+          <input type="text" value={form.title} placeholder="Tiêu đề..." onChange={set("title")} />
         </div>
         <div className="form-group">
           <label>Danh mục</label>
-          <select defaultValue={form.cat} onChange={(e) => (form.cat = e.target.value)}>
+          <select value={form.category} onChange={set("category")}>
             {["THÔNG BÁO", "KẾT QUẢ", "VĐV NỔI BẬT", "HƯỚNG DẪN", "SỰ KIỆN"].map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
@@ -534,122 +415,88 @@ export function AddNewsModal() {
         </div>
         <div className="form-group">
           <label>Tóm tắt ngắn (1-2 câu)</label>
-          <textarea
-            rows={2}
-            defaultValue={form.desc}
-            placeholder="Hiển thị ở trang danh sách..."
-            onChange={(e) => (form.desc = e.target.value)}
-          />
+          <textarea rows={2} value={form.desc} placeholder="Hiển thị ở trang danh sách..." onChange={set("desc")} />
         </div>
         <div className="form-group">
           <label>Nội dung chi tiết</label>
-          <textarea
-            rows={6}
-            defaultValue={form.fullContent}
-            placeholder="Viết nội dung bài viết đầy đủ tại đây..."
-            onChange={(e) => (form.fullContent = e.target.value)}
-          />
+          <textarea rows={6} value={form.fullContent} placeholder="Viết nội dung bài viết đầy đủ..." onChange={set("fullContent")} />
         </div>
         <div className="form-group">
           <label>Hình ảnh bài viết</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                  setImgPreview(ev.target.result);
-                  form.img = ev.target.result;
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
-          />
-          <p className="file-note">Chọn file ảnh. File sẽ được nén và lưu ở dạng Base64.</p>
-          {imgPreview && (
-            <img
-              src={imgPreview}
-              alt="Preview"
-              className="news-img-preview"
-              style={{ display: "block" }}
-            />
+          <input type="file" accept="image/*" onChange={onImage} />
+          {form.image && (
+            <img src={form.image} alt="Preview" className="news-img-preview" style={{ display: "block" }} />
           )}
         </div>
         <div className="form-group">
           <label>Độ rộng hiển thị (Tin nổi bật)?</label>
-          <select
-            defaultValue={form.featured}
-            onChange={(e) => (form.featured = Number(e.target.value))}
-          >
+          <select value={form.featured} onChange={set("featured", Number)}>
             <option value={0}>Tin thường (1 cột)</option>
             <option value={1}>Tin nổi bật (Chiếm 2 cột)</option>
           </select>
         </div>
       </div>
       <ModalFooter>
-        <button className="btn btn-ghost-sm" onClick={() => closeModal("addNewsModal")}>
-          Hủy
-        </button>
-        <button className="btn btn-primary" onClick={() => saveNews(form)}>
-          Đăng Tin
-        </button>
+        <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
+        <button className="btn btn-primary" onClick={save}>Đăng Tin</button>
       </ModalFooter>
     </ModalShell>
   );
 }
 
 // ─── 8. Edit Prizes Modal ──────────────────────────────────────────────────────
+const PRIZE_TIERS = [
+  { key: "gold", emoji: "🥇", label: "Giải Vàng (Vô Địch)" },
+  { key: "silver", emoji: "🥈", label: "Giải Bạc (Á Quân)" },
+  { key: "bronze", emoji: "🥉", label: "Giải Đồng (Hạng Ba)" },
+];
+
 export function PrizesModal() {
-  const { closeModal, savePrizes, prizes } = useAppContext();
-  let form = {
-    goldAmt: prizes?.gold?.amt || "",
-    goldDesc: prizes?.gold?.desc || "",
-    silverAmt: prizes?.silver?.amt || "",
-    silverDesc: prizes?.silver?.desc || "",
-    bronzeAmt: prizes?.bronze?.amt || "",
-    bronzeDesc: prizes?.bronze?.desc || "",
+  const { state } = useApp();
+  if (state.modal !== "prizes") return null;
+  return <PrizesForm data={state.modalData || {}} />;
+}
+
+function PrizesForm({ data }) {
+  const { actions } = useApp();
+  const { prizes, onSaved } = data;
+  const [form, setForm] = useState({
+    gold: { ...prizes?.gold },
+    silver: { ...prizes?.silver },
+    bronze: { ...prizes?.bronze },
+  });
+
+  const set = (tier, field) => (e) =>
+    setForm((f) => ({ ...f, [tier]: { ...f[tier], [field]: e.target.value } }));
+
+  const save = async () => {
+    await prizeAPI.update(form);
+    onSaved?.(form);
+    actions.closeModal();
   };
+
   return (
-    <ModalShell id="prizesModal" maxWidth={450}>
-      <ModalHeader title="Chỉnh Sửa Giải Thưởng" onClose={() => closeModal("prizesModal")} />
+    <ModalShell name="prizes" title="Chỉnh Sửa Giải Thưởng" maxWidth={450}>
       <div className="modal-body">
-        {[
-          { emoji: "🥇", label: "Giải Vàng (Vô Địch)", amtKey: "goldAmt", descKey: "goldDesc" },
-          { emoji: "🥈", label: "Giải Bạc (Á Quân)", amtKey: "silverAmt", descKey: "silverDesc" },
-          { emoji: "🥉", label: "Giải Đồng (Hạng Ba)", amtKey: "bronzeAmt", descKey: "bronzeDesc" },
-        ].map(({ emoji, label, amtKey, descKey }) => (
-          <div key={amtKey}>
+        {PRIZE_TIERS.map(({ key, emoji, label }) => (
+          <div key={key}>
             <h4 className="modal-sub-title">{emoji} {label}</h4>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
               <div className="form-group" style={{ margin: 0 }}>
                 <label>Số tiền</label>
-                <input
-                  type="text"
-                  defaultValue={form[amtKey]}
-                  onChange={(e) => (form[amtKey] = e.target.value)}
-                />
+                <input type="text" value={form[key].amount || ""} onChange={set(key, "amount")} />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label>Mô tả phụ</label>
-                <input
-                  type="text"
-                  defaultValue={form[descKey]}
-                  onChange={(e) => (form[descKey] = e.target.value)}
-                />
+                <input type="text" value={form[key].desc || ""} onChange={set(key, "desc")} />
               </div>
             </div>
           </div>
         ))}
       </div>
       <ModalFooter>
-        <button className="btn btn-ghost-sm" onClick={() => closeModal("prizesModal")}>
-          Hủy
-        </button>
-        <button className="btn btn-primary" onClick={() => savePrizes(form)}>
-          Lưu Giải Thưởng
-        </button>
+        <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
+        <button className="btn btn-primary" onClick={save}>Lưu Giải Thưởng</button>
       </ModalFooter>
     </ModalShell>
   );
@@ -657,109 +504,86 @@ export function PrizesModal() {
 
 // ─── 9. Edit Registration Link Modal ──────────────────────────────────────────
 export function RegLinkModal() {
-  const { closeModal, saveRegLink, regLink } = useAppContext();
-  let localVal = regLink || "";
+  const { state } = useApp();
+  if (state.modal !== "regLink") return null;
+  return <RegLinkForm data={state.modalData || {}} />;
+}
+
+function RegLinkForm({ data }) {
+  const { actions } = useApp();
+  const [val, setVal] = useState(data.value || "");
+
+  const save = async () => {
+    await actions.updateConfig("regLink", val);
+    actions.closeModal();
+  };
+
   return (
-    <ModalShell id="regLinkModal" maxWidth={440}>
-      <ModalHeader title="Link Đăng Ký Giải Đấu" onClose={() => closeModal("regLinkModal")} />
+    <ModalShell name="regLink" title="Link Đăng Ký Giải Đấu" maxWidth={440}>
       <div className="modal-body">
         <div className="form-group">
           <label>Đường dẫn Form đăng ký (Google Form, etc.)</label>
-          <input
-            type="text"
-            defaultValue={regLink}
-            placeholder="https://docs.google.com/forms/..."
-            onChange={(e) => (localVal = e.target.value)}
-          />
+          <input type="text" value={val} placeholder="https://docs.google.com/forms/..."
+            onChange={(e) => setVal(e.target.value)} />
         </div>
       </div>
       <ModalFooter>
-        <button className="btn btn-ghost-sm" onClick={() => closeModal("regLinkModal")}>
-          Hủy
-        </button>
-        <button className="btn btn-primary" onClick={() => saveRegLink(localVal)}>
-          Lưu
-        </button>
+        <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
+        <button className="btn btn-primary" onClick={save}>Lưu</button>
       </ModalFooter>
     </ModalShell>
   );
 }
 
 // ─── 10. Video Viewer Modal ────────────────────────────────────────────────────
+function toEmbedUrl(url) {
+  if (!url) return "";
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  return url;
+}
+
 export function VideoViewerModal() {
-  const { videoViewer, closeVideoViewer } = useAppContext();
-  if (!videoViewer) return null;
-  const { title, embedUrl, tags, views } = videoViewer;
+  const { state } = useApp();
+  if (state.modal !== "videoViewer" || !state.modalData?.video) return null;
+  return <VideoViewerView video={state.modalData.video} />;
+}
+
+function VideoViewerView({ video }) {
+  const { actions } = useApp();
+  const open = useOpenTransition();
+
   return (
-    <div
-      className="modal-overlay"
-      id="videoViewerModal"
-      style={{ display: "flex" }}
-      onClick={closeVideoViewer}
-    >
-      <div
-        className="modal video-viewer-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          className="modal-close video-viewer-close"
-          onClick={closeVideoViewer}
-        >
-          ✕
-        </button>
-        <div className="video-viewer-container" id="videoViewerContainer">
+    <div className={`modal-overlay${open ? " open" : ""}`} onClick={() => actions.closeModal()}>
+      <div className="modal video-viewer-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close video-viewer-close" onClick={() => actions.closeModal()}>✕</button>
+        <div className="video-viewer-container">
           <iframe
-            src={embedUrl}
-            title={title}
+            src={toEmbedUrl(video.url)}
+            title={video.name}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: 8 }}
           />
         </div>
-        <div
-          className="video-viewer-info"
-          style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20 }}
-        >
+        <div className="video-viewer-info"
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20 }}>
           <div style={{ flex: 1 }}>
-            <h3 style={{ margin: "0 0 12px 0" }}>{title}</h3>
-            <div id="videoViewerTags">
-              {(tags || []).map((t) => (
-                <span
-                  key={t}
-                  style={{
-                    display: "inline-block",
-                    background: "var(--blue)",
-                    color: "#fff",
-                    borderRadius: 4,
-                    padding: "2px 8px",
-                    fontSize: "0.8rem",
-                    marginRight: 4,
-                  }}
-                >
+            <h3 style={{ margin: "0 0 12px 0" }}>{video.name}</h3>
+            <div>
+              {(video.tags || []).map((t) => (
+                <span key={t} style={{
+                  display: "inline-block", background: "var(--blue)", color: "#fff",
+                  borderRadius: 4, padding: "2px 8px", fontSize: "0.8rem", marginRight: 4,
+                }}>
                   {t}
                 </span>
               ))}
             </div>
           </div>
-          <div
-            className="video-viewer-views"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontFamily: "var(--font-cond)",
-              fontWeight: 700,
-              color: "var(--text-muted)",
-              fontSize: "1.1rem",
-              padding: "6px 12px",
-              background: "rgba(0,0,0,0.05)",
-              borderRadius: 8,
-              whiteSpace: "nowrap",
-              marginTop: 2,
-            }}
-          >
+          <div className="video-viewer-views" style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span>👁️</span>
-            <span>{views ?? 0}</span>
+            <span>{video.views ?? 0}</span>
           </div>
         </div>
       </div>
@@ -768,133 +592,63 @@ export function VideoViewerModal() {
 }
 
 // ─── 11. Image Config Modal ────────────────────────────────────────────────────
-function ImageConfigSection({ title, configKey, preview, onUrlChange, onFileChange, onClear }) {
-  return (
-    <div style={{ borderBottom: "1px solid var(--border)", paddingBottom: 20, marginBottom: 20 }}>
-      <h4
-        style={{
-          fontFamily: "var(--font-cond)",
-          color: "var(--blue)",
-          marginBottom: 12,
-          fontSize: "1.1rem",
-          letterSpacing: 1,
-        }}
-      >
-        {title}
-      </h4>
-      <div className="form-group" style={{ marginBottom: 12 }}>
-        <label>Đường dẫn URL ảnh</label>
-        <input
-          type="text"
-          placeholder="URL ảnh..."
-          onChange={(e) => onUrlChange(configKey, e.target.value)}
-        />
-      </div>
-      <div className="form-group media-uploader">
-        <label>Hoặc tải ảnh lên từ thiết bị</label>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={() => document.getElementById(`imgFile_${configKey}`).click()}
-          >
-            📁 Chọn File
-          </button>
-          {preview && (
-            <button
-              type="button"
-              className="btn btn-danger btn-sm"
-              onClick={() => onClear(configKey)}
-            >
-              Xóa
-            </button>
-          )}
-          <input
-            type="file"
-            id={`imgFile_${configKey}`}
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={(e) => onFileChange(configKey, e.target.files[0])}
-          />
-        </div>
-        <p className="file-note">Chấp nhận JPG, PNG, WebP. File sẽ được lưu dưới dạng Base64.</p>
-        {preview && (
-          <img
-            src={preview}
-            alt="Preview"
-            style={{
-              maxWidth: "100%",
-              maxHeight: 120,
-              borderRadius: 6,
-              border: "1px solid var(--border)",
-              objectFit: "contain",
-              marginTop: 8,
-            }}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
+const IMAGE_SECTIONS = [
+  { key: "logo", title: "1. LOGO WEBSITE" },
+  { key: "heroBg", title: "2. ẢNH NỀN HERO" },
+  { key: "chatbotLogo", title: "3. LOGO CHAT BOX (MASCOT)" },
+  { key: "newsFallback", title: "4. ẢNH BÀI VIẾT MẶC ĐỊNH (NEWS FALLBACK)" },
+  { key: "videoFallback", title: "5. ẢNH VIDEO MẶC ĐỊNH (VIDEO FALLBACK)" },
+];
 
 export function ImageConfigModal() {
-  const { closeModal, saveImageConfig, imageConfig, updateImagePreview } = useAppContext();
-  const previews = imageConfig?.previews || {};
+  const { state, actions } = useApp();
+  if (state.modal !== "imageConfig") return null;
 
-  const handleUrlChange = (key, val) => updateImagePreview(key, val);
-  const handleFileChange = (key, file) => {
+  const previews = state.images || {};
+
+  const setImage = (key, value) => actions.updateImages(key, value);
+  const onFile = (key) => (e) => {
+    const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => updateImagePreview(key, e.target.result);
+    reader.onload = (ev) => setImage(key, ev.target.result);
     reader.readAsDataURL(file);
   };
-  const handleClear = (key) => updateImagePreview(key, "");
-
-  const sections = [
-    { title: "1. LOGO WEBSITE", key: "logo" },
-    { title: "2. ẢNH NỀN HERO", key: "heroBg" },
-    { title: "3. LOGO CHAT BOX (MASCOT)", key: "chatbotLogo" },
-    { title: "4. ẢNH BÀI VIẾT MẶC ĐỊNH (NEWS FALLBACK)", key: "newsFallback" },
-    { title: "5. ẢNH VIDEO MẶC ĐỊNH (VIDEO FALLBACK)", key: "videoFallback" },
-  ];
 
   return (
-    <ModalShell id="imageConfigModal" maxWidth={600}>
-      <ModalHeader
-        title="QUẢN LÝ HÌNH ẢNH HỆ THỐNG"
-        onClose={() => closeModal("imageConfigModal")}
-      />
+    <ModalShell name="imageConfig" title="QUẢN LÝ HÌNH ẢNH HỆ THỐNG" maxWidth={600}>
       <div className="modal-body" style={{ maxHeight: "65vh", overflowY: "auto" }}>
-        {sections.map(({ title, key }) => (
-          <ImageConfigSection
-            key={key}
-            title={title}
-            configKey={key}
-            preview={previews[key] || ""}
-            onUrlChange={handleUrlChange}
-            onFileChange={handleFileChange}
-            onClear={handleClear}
-          />
+        {IMAGE_SECTIONS.map(({ key, title }) => (
+          <div key={key} style={{ borderBottom: "1px solid var(--border)", paddingBottom: 20, marginBottom: 20 }}>
+            <h4 style={{ color: "var(--blue)", marginBottom: 12 }}>{title}</h4>
+            <div className="form-group" style={{ marginBottom: 12 }}>
+              <label>Đường dẫn URL ảnh</label>
+              <input type="text" placeholder="URL ảnh..." value={previews[key] || ""}
+                onChange={(e) => setImage(key, e.target.value)} />
+            </div>
+            <div className="form-group media-uploader">
+              <label>Hoặc tải ảnh lên từ thiết bị</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <input type="file" accept="image/*" onChange={onFile(key)} />
+                {previews[key] && (
+                  <button type="button" className="btn btn-danger btn-sm" onClick={() => setImage(key, "")}>
+                    Xóa
+                  </button>
+                )}
+              </div>
+              {previews[key] && (
+                <img src={previews[key]} alt="Preview"
+                  style={{ maxWidth: "100%", maxHeight: 120, borderRadius: 6, objectFit: "contain", marginTop: 8 }} />
+              )}
+            </div>
+          </div>
         ))}
       </div>
       <ModalFooter>
-        <button className="btn btn-primary" onClick={() => closeModal("imageConfigModal")}>
-          Hoàn tất
-        </button>
+        <button className="btn btn-primary" onClick={() => actions.closeModal()}>Hoàn tất</button>
       </ModalFooter>
     </ModalShell>
   );
-}
-
-// ─── useState_ shim (alias to avoid import requirement in this file) ──────────
-// In production, import { useState } from "react" at top of file.
-// This is a placeholder so the file is self-contained for reference.
-function useState_(initial) {
-  // This will be replaced by actual React import in real usage
-  const { useState } = require !== undefined
-    ? { useState: (v) => [v, () => {}] }
-    : { useState: (v) => [v, () => {}] };
-  return useState(initial);
 }
 
 // ─── Root Modals Bundle ────────────────────────────────────────────────────────
@@ -903,7 +657,7 @@ export default function Modals() {
     <>
       <NewsDetailModal />
       <LoginModal />
-      <HeroFieldModal />
+      <EditFieldModal />
       <AddEventModal />
       <AddRoadmapModal />
       <AddVideoModal />

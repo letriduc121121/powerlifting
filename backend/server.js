@@ -17,8 +17,8 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/powerlifti
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// ── Serve static frontend from project root ───────────────────────────────────
-const clientPath = path.join(__dirname, '..');
+// ── Serve static React build (frontend/build) ────────────────────────────────
+const clientPath = path.join(__dirname, '..', 'frontend', 'build');
 app.use(express.static(clientPath));
 
 // ── Connect DB → seed → start ─────────────────────────────────────────────────

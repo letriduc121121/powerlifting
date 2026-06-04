@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useApp } from "../context/AppContext";
 import { videoAPI } from "../services/api";
+import Pagination from "./Pagination";
 
 const VIDEOS_PER_PAGE = 6;
 
@@ -29,6 +30,7 @@ export default function Guide() {
       .finally(() => setLoading(false));
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, []);
 
   const buildTags = (data) => {
@@ -96,19 +98,16 @@ export default function Guide() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="pagination-wrap reveal" style={{ marginTop: 40 }}>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                className={`page-btn${p === page ? " active" : ""}`}
-                onClick={() => setPage(p)}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        )}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={VIDEOS_PER_PAGE}
+          onChange={(p) => {
+            setPage(p);
+            document.getElementById("huong-dan")?.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
       </div>
     </section>
   );
