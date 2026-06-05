@@ -11,27 +11,18 @@ router.post('/increment', async (req, res) => {
     return res.status(400).json({ success: false, message: 'itemType and itemId are required.' });
   }
   
+  const Model = itemType === 'video' ? Video : itemType === 'news' ? News : null;
+  if (!Model) return res.status(400).json({ success: false, message: 'Invalid itemType.' });
+
   try {
-    let views = 0;
-    if (itemType === 'video') {
-      const updated = await Video.findOneAndUpdate(
-        { id: Number(itemId) },
-        { $inc: { views: 1 } },
-        { new: true }
-      );
-      if (updated) views = updated.views;
-    } else if (itemType === 'news') {
-      const updated = await News.findOneAndUpdate(
-        { id: Number(itemId) },
-        { $inc: { views: 1 } },
-        { new: true }
-      );
-      if (updated) views = updated.views;
-    } else {
-      return res.status(400).json({ success: false, message: 'Invalid itemType.' });
-    }
-    
-    res.json({ success: true, views });
+    const updated = await Model.findOneAndUpdate(
+      { id: Number(itemId) },
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ success: false, message: 'Item not found.' });
+
+    res.json({ success: true, views: updated.views });
   } catch (error) {
     console.error('Error incrementing view:', error.message);
     res.status(500).json({ success: false, message: 'Server error incrementing view.' });

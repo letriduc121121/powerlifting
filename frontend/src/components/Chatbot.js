@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { useAppContext } from "../context/AppContext";
+import { useApp } from "../context/AppContext";
 
 export default function Chatbot() {
-  const { config } = useAppContext();
+  const { state } = useApp();
+  const { config, images } = state;
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -14,8 +15,7 @@ export default function Chatbot() {
   const [quickRepliesVisible, setQuickRepliesVisible] = useState(true);
   const messagesEndRef = useRef(null);
 
-  const chatbotLogoSrc =
-    config?.images?.chatbotLogo || "/images/chatbot-logo.png";
+  const chatbotLogoSrc = images?.chatbotLogo || "/images/chatbot-logo.png";
 
   const quickReplies = [
     { label: "📅 Lịch thi đấu", text: "Lịch thi đấu?" },
@@ -32,8 +32,8 @@ export default function Chatbot() {
 
   const getBotReply = (userText) => {
     const t = userText.toLowerCase();
-    const date = config?.fields?.heroDate || "20/08/2026 – 21/08/2026";
-    const location = config?.fields?.heroLocation || "Thành phố Hà Nội";
+    const date = config?.heroDate || "20/08/2026 – 21/08/2026";
+    const location = config?.heroLocation || "Thành phố Hà Nội";
 
     if (t.includes("lịch") || t.includes("thời gian") || t.includes("ngày"))
       return `📅 Giải đấu diễn ra vào **${date}** tại ${location}. Thời gian thi đấu từ 07:00 – 18:00 mỗi ngày.`;
@@ -58,7 +58,6 @@ export default function Chatbot() {
 
     setMessages((prev) => [...prev, { role: "user", text: msg }]);
     setInputVal("");
-    setQuickRepliesVisible(false);
 
     setTimeout(() => {
       const reply = getBotReply(msg);
@@ -74,7 +73,7 @@ export default function Chatbot() {
     <>
       {/* Toggle Button */}
       <button
-        className="chatbot-toggle"
+        className={`chatbot-toggle${isOpen ? " open" : ""}`}
         id="chatToggle"
         onClick={() => setIsOpen((v) => !v)}
       >
@@ -98,7 +97,7 @@ export default function Chatbot() {
 
       {/* Chatbox */}
       {isOpen && (
-        <div className="chatbot-box" id="chatBox">
+        <div className="chatbot-box open" id="chatBox">
           {/* Header */}
           <div className="chatbot-header">
             <div

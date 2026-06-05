@@ -119,6 +119,21 @@
   color: #fff;
 }
 
+.footer-admin-link {
+  background: none;
+  border: none;
+  color: #9aa0a6;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  transition: color var(--transition-fast);
+}
+
+.footer-admin-link:hover {
+  color: #fff;
+}
+
 #footerLogoImg {
   height: 200px; /* fixed pixel height for footer logo */
   width: auto;

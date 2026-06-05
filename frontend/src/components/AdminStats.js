@@ -12,6 +12,7 @@ export default function AdminStats() {
 
   useEffect(() => {
     if (isAdmin) actions.loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
   if (!isAdmin) return null;

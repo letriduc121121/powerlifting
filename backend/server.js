@@ -1,24 +1,28 @@
 // backend/server.js
 
-const express = require('express');
-const cors    = require('cors');
-const path    = require('path');
+const express     = require('express');
+const cors        = require('cors');
+const helmet      = require('helmet');
+const compression = require('compression');
+const path        = require('path');
 require('dotenv').config();
 
-const connectDB   = require('./config/db');
-const seedAdmin   = require('./seeds/seedAdmin');
-const seedData    = require('./seeds/seedData');
+const connectDB = require('./config/db');
+const seedAdmin = require('./seeds/seedAdmin');
+const seedData  = require('./seeds/seedData');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/powerlifting';
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors());
+app.use(helmet({ contentSecurityPolicy: false })); // bảo mật HTTP headers
+app.use(compression());                             // gzip — nén mạnh response base64
+app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json({ limit: '50mb' }));
 
-// ── Serve static frontend from project root ───────────────────────────────────
-const clientPath = path.join(__dirname, '..');
+// ── Serve static React build (frontend/build) ────────────────────────────────
+const clientPath = path.join(__dirname, '..', 'frontend', 'build');
 app.use(express.static(clientPath));
 
 // ── Connect DB → seed → start ─────────────────────────────────────────────────
@@ -32,6 +36,9 @@ connectDB(MONGO_URI).then(async () => {
   app.use('/api/videos', require('./routes/videos'));
   app.use('/api/news',   require('./routes/news'));
   app.use('/api/views',  require('./routes/views'));
+
+  // ── API 404 (trả JSON thay vì rơi vào SPA fallback) ──────────────────────────
+  app.use('/api', (_req, res) => res.status(404).json({ success: false, message: 'Not found.' }));
 
   // ── SPA fallback ────────────────────────────────────────────────────────────
   app.get('*', (_req, res) => res.sendFile(path.join(clientPath, 'index.html')));

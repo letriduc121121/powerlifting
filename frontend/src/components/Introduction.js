@@ -22,9 +22,9 @@ export default function Introduction() {
     actions.openModal("editField", { key, title, value: config[key], isTextarea });
   };
 
-  const handleAddRoadmap = () => actions.openModal("addRoadmap", { type: "beginner", onSaved: reload });
+  const handleAddRoadmap = () => actions.openModal("addRoadmap", { type: "beginner", onSaved: reload, existing: roadmap });
   const handleEditRoadmap = (item) =>
-    actions.openModal("addRoadmap", { type: "beginner", editItem: item, onSaved: reload });
+    actions.openModal("addRoadmap", { type: "beginner", editItem: item, onSaved: reload, existing: roadmap });
 
   const handleDeleteRoadmap = async (id) => {
     if (!window.confirm("Xóa bước này?")) return;
@@ -99,11 +99,11 @@ export default function Introduction() {
             ) : (
               roadmap.map((step, idx) => (
                 <RoadmapCard
-                  key={step._id || step.id || idx}
+                  key={step.id || step._id || idx}
                   step={step}
                   isAdmin={isAdmin}
                   onEdit={() => handleEditRoadmap(step)}
-                  onDelete={() => handleDeleteRoadmap(step._id || step.id)}
+                  onDelete={() => handleDeleteRoadmap(step.id || step._id)}
                 />
               ))
             )}
@@ -115,22 +115,25 @@ export default function Introduction() {
 }
 
 function RoadmapCard({ step, isAdmin, onEdit, onDelete }) {
-  const weekLabel =
-    step.weekEnd && step.weekEnd !== step.weekStart
+  const weekLabel = step.week
+    ? step.week
+    : step.weekEnd && step.weekEnd !== step.weekStart
       ? `Tuần ${step.weekStart}–${step.weekEnd}`
       : `Tuần ${step.weekStart}`;
 
   return (
-    <div className="tm-card">
-      <div className="tm-week">{weekLabel}</div>
-      <div className="tm-title">{step.title}</div>
-      <div className="tm-content">{step.content}</div>
-      {isAdmin && (
-        <div className="admin-card-actions">
-          <button className="btn btn-outline btn-xs" onClick={onEdit}>✏️ Sửa</button>
-          <button className="btn btn-danger btn-xs" onClick={onDelete}>🗑️ Xóa</button>
-        </div>
-      )}
+    <div className="tm-roadmap-item">
+      <div className="week-col">{weekLabel}</div>
+      <div className="content-col">
+        <h4>{step.title}</h4>
+        <p>{step.content}</p>
+        {isAdmin && (
+          <div className="card-admin-btns">
+            <button className="btn-ghost-sm" onClick={onEdit}>✏️ Sửa</button>
+            <button className="btn-ghost-sm" style={{ color: "#EA4335" }} onClick={onDelete}>🗑 Xóa</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

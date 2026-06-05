@@ -2,10 +2,7 @@ import axios from "axios";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: { "Content-Type": "application/json" },
-});
+const api = axios.create({ baseURL: BASE_URL });
 
 // Tự động gắn token vào header nếu đã đăng nhập
 api.interceptors.request.use((config) => {
@@ -14,11 +11,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Xử lý lỗi 401 → tự đăng xuất
+// Tự đăng xuất khi token hết hạn / không hợp lệ (bỏ qua chính request đăng nhập
+// để màn hình login còn hiển thị được thông báo "sai tài khoản/mật khẩu").
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    // Bỏ qua login & verify để caller tự xử lý (hiện thông báo / đăng xuất mượt).
+    const url = err.config?.url || "";
+    const skip = url.includes("/auth/login") || url.includes("/auth/verify");
+    if (err.response?.status === 401 && !skip) {
       localStorage.removeItem("pl_token");
       window.location.reload();
     }
@@ -26,78 +27,188 @@ api.interceptors.response.use(
   }
 );
 
-// ─── AUTH ─────────────────────────────────────────────────────────────────────
+// ─── AppData (1 document 'main' chứa config, ảnh, giải thưởng, nội dung, lộ trình) ─
+// Nhiều phần (config, events, prizes, 2 lộ trình) cùng cần document này. Thay vì
+// gọi /data nhiều lần, ta cache lại + gộp các request đồng thời vào 1 promise duy
+// nhất → chỉ 1 lượt mạng khi tải trang. Cache tự làm mới khi admin chỉnh sửa.
+let appDataCache = null;
+let appDataPromise = null;
+
+const getAppData = ({ force = false } = {}) => {
+  if (!force && appDataCache) return Promise.resolve(appDataCache);
+  if (!force && appDataPromise) return appDataPromise;
+  appDataPromise = api
+    .get("/data")
+    .then((r) => {
+      appDataCache = r.data?.data || {};
+      appDataPromise = null;
+      return appDataCache;
+    })
+    .catch((e) => {
+      appDataPromise = null;
+      throw e;
+    });
+  return appDataPromise;
+};
+
+const patchAppData = (fields) =>
+  api.put("/data", fields).then((r) => {
+    appDataCache = r.data?.data || appDataCache; // cập nhật cache theo doc mới
+    return appDataCache;
+  });
+
+// Gộp các GET trùng nhau đang cùng "bay" vào 1 request (chống gọi lặp khi
+// component re-render / StrictMode mount đôi). Promise tự xoá khi xong nên lần
+// tải sau vẫn lấy dữ liệu mới.
+const inflight = {};
+const dedupeGet = (url, transform = (x) => x) => {
+  if (inflight[url]) return inflight[url];
+  inflight[url] = api
+    .get(url)
+    .then((r) => {
+      delete inflight[url];
+      return transform(r.data?.data || []);
+    })
+    .catch((e) => {
+      delete inflight[url];
+      throw e;
+    });
+  return inflight[url];
+};
+
+// ─── AUTH (bảng admins) ─────────────────────────────────────────────────────────
 export const authAPI = {
   login: (username, password) =>
-    api.post("/auth/login", { username, password }),
-  logout: () => api.post("/auth/logout"),
+    api.post("/auth/login", { username, password }).then((r) => r.data),
+  verify: () => api.get("/auth/verify").then((r) => r.data),
+  logout: () => Promise.resolve(),
 };
 
-// ─── CONFIG (hero fields, editable content) ──────────────────────────────────
+// ─── CONFIG + IMAGES (nằm trong AppData) ─────────────────────────────────────────
+const CONFIG_FIELDS = [
+  "heroDate", "heroLocation", "infoTimeSub", "infoLocationSub", "infoWeightClass",
+  "infoWeightClassSub", "infoTarget", "infoTargetSub", "regLink", "introTitle",
+  "introDesc", "statAthletes", "statClasses", "statEvents",
+];
 export const configAPI = {
-  getAll: () => api.get("/config"),
-  update: (key, value) => api.put(`/config/${key}`, { value }),
-  updateMany: (data) => api.put("/config", data),
+  getAll: async () => {
+    const d = await getAppData();
+    const config = {};
+    CONFIG_FIELDS.forEach((k) => {
+      if (d[k] !== undefined) config[k] = d[k];
+    });
+    return { data: { config, images: d.images || {} } };
+  },
+  update: (key, value) => patchAppData({ [key]: value }),
 };
 
-// ─── VIDEOS ──────────────────────────────────────────────────────────────────
-export const videoAPI = {
-  getAll: () => api.get("/videos"),
-  create: (data) => api.post("/videos", data),
-  update: (id, data) => api.put(`/videos/${id}`, data),
-  delete: (id) => api.delete(`/videos/${id}`),
-  incrementView: (id) => api.post(`/videos/${id}/view`),
-};
-
-// ─── NEWS ─────────────────────────────────────────────────────────────────────
-export const newsAPI = {
-  getAll: () => api.get("/news"),
-  create: (data) => api.post("/news", data),
-  update: (id, data) => api.put(`/news/${id}`, data),
-  delete: (id) => api.delete(`/news/${id}`),
-  incrementView: (id) => api.post(`/news/${id}/view`),
-};
-
-// ─── EVENTS (Nội dung thi đấu) ───────────────────────────────────────────────
-export const eventAPI = {
-  getAll: () => api.get("/events"),
-  create: (data) => api.post("/events", data),
-  update: (id, data) => api.put(`/events/${id}`, data),
-  delete: (id) => api.delete(`/events/${id}`),
-};
-
-// ─── ROADMAP ─────────────────────────────────────────────────────────────────
-export const roadmapAPI = {
-  getAll: (type) => api.get(`/roadmap?type=${type}`), // type: 'beginner' | 'tournament'
-  create: (data) => api.post("/roadmap", data),
-  update: (id, data) => api.put(`/roadmap/${id}`, data),
-  delete: (id) => api.delete(`/roadmap/${id}`),
-};
-
-// ─── PRIZES ──────────────────────────────────────────────────────────────────
-export const prizeAPI = {
-  getAll: () => api.get("/prizes"),
-  update: (data) => api.put("/prizes", data), // bulk update gold/silver/bronze
-};
-
-// ─── STATS ───────────────────────────────────────────────────────────────────
-export const statsAPI = {
-  get: () => api.get("/stats"),
-};
-
-// ─── CHATBOT ─────────────────────────────────────────────────────────────────
-export const chatAPI = {
-  send: (message) => api.post("/chat", { message }),
-};
-
-// ─── IMAGES ──────────────────────────────────────────────────────────────────
 export const imageAPI = {
-  upload: (formData) =>
-    api.post("/images/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
-  getConfig: () => api.get("/images/config"),
-  updateConfig: (key, value) => api.put(`/images/config/${key}`, { value }),
+  updateConfig: async (key, value) => {
+    const d = await getAppData();
+    return patchAppData({ images: { ...(d.images || {}), [key]: value } });
+  },
+};
+
+// ─── VIDEOS (bảng videos) ────────────────────────────────────────────────────────
+export const videoAPI = {
+  getAll: () => dedupeGet("/videos").then((data) => ({ data })),
+  create: (data) => api.post("/videos", data).then((r) => r.data?.data),
+  update: (id, data) => api.put(`/videos/${id}`, data).then((r) => r.data?.data),
+  delete: (id) => api.delete(`/videos/${id}`),
+  incrementView: (id) =>
+    api.post("/views/increment", { itemType: "video", itemId: id }),
+};
+
+// ─── NEWS (bảng news) — chuẩn hoá cat↔category, date↔createdAt ───────────────────
+const normalizeNews = (n) => ({ ...n, category: n.cat ?? n.category, createdAt: n.date });
+const denormalizeNews = (data) => {
+  const { category, createdAt, ...rest } = data;
+  return { ...rest, cat: category ?? data.cat, date: createdAt ?? data.date };
+};
+export const newsAPI = {
+  getAll: () =>
+    dedupeGet("/news", (arr) => arr.map(normalizeNews)).then((data) => ({ data })),
+  create: (data) => api.post("/news", denormalizeNews(data)).then((r) => r.data?.data),
+  update: (id, data) =>
+    api.put(`/news/${id}`, denormalizeNews(data)).then((r) => r.data?.data),
+  delete: (id) => api.delete(`/news/${id}`),
+  incrementView: (id) =>
+    api.post("/views/increment", { itemType: "news", itemId: id }),
+};
+
+// ─── EVENTS / ROADMAP / PRIZES (mảng/đối tượng bên trong AppData) ────────────────
+export const eventAPI = {
+  getAll: async () => ({ data: (await getAppData()).events || [] }),
+  create: async (data) => {
+    const d = await getAppData();
+    return patchAppData({ events: [...(d.events || []), { ...data, id: Date.now() }] });
+  },
+  update: async (id, data) => {
+    const d = await getAppData();
+    const events = (d.events || []).map((e) =>
+      String(e.id || e._id) === String(id) ? { ...e, ...data } : e
+    );
+    return patchAppData({ events });
+  },
+  delete: async (id) => {
+    const d = await getAppData();
+    return patchAppData({
+      events: (d.events || []).filter((e) => String(e.id || e._id) !== String(id)),
+    });
+  },
+};
+
+const roadmapKey = (type) => `${type || "tournament"}Roadmap`; // beginnerRoadmap | tournamentRoadmap
+export const roadmapAPI = {
+  getAll: async (type) => {
+    const list = (await getAppData())[roadmapKey(type)] || [];
+    return { data: [...list].sort((a, b) => Number(a.weekStart) - Number(b.weekStart)) };
+  },
+  create: async (data) => {
+    const d = await getAppData();
+    const key = roadmapKey(data.type);
+    return patchAppData({ [key]: [...(d[key] || []), { ...data, id: Date.now() }] });
+  },
+  update: async (id, data) => {
+    const d = await getAppData();
+    const key = roadmapKey(data.type);
+    const list = (d[key] || []).map((s) =>
+      String(s.id || s._id) === String(id) ? { ...s, ...data } : s
+    );
+    return patchAppData({ [key]: list });
+  },
+  delete: async (id) => {
+    const d = await getAppData();
+    for (const key of ["beginnerRoadmap", "tournamentRoadmap"]) {
+      if ((d[key] || []).some((s) => String(s.id || s._id) === String(id))) {
+        return patchAppData({
+          [key]: d[key].filter((s) => String(s.id || s._id) !== String(id)),
+        });
+      }
+    }
+  },
+};
+
+export const prizeAPI = {
+  getAll: async () => ({ data: (await getAppData()).prizes || null }),
+  update: (prizes) => patchAppData({ prizes }),
+};
+
+// ─── STATS (admin) — tổng hợp từ news + videos ──────────────────────────────────
+export const statsAPI = {
+  get: async () => {
+    const [nv, vv] = await Promise.all([api.get("/news"), api.get("/videos")]);
+    const news = (nv.data?.data || []).map(normalizeNews);
+    const videos = vv.data?.data || [];
+    return {
+      data: {
+        videos,
+        news,
+        totalVideoViews: videos.reduce((s, v) => s + (v.views || 0), 0),
+        totalNewsViews: news.reduce((s, n) => s + (n.views || 0), 0),
+      },
+    };
+  },
 };
 
 export default api;

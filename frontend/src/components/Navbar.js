@@ -106,9 +106,9 @@ export default function Navbar() {
           </a>
         </li>
 
-        {/* Mobile: Admin button */}
-        <li className="mobile-only-nav-item" style={{ width: "100%" }}>
-          {isAdmin ? (
+        {/* Mobile: Admin logout (chỉ khi đã đăng nhập) */}
+        {isAdmin && (
+          <li className="mobile-only-nav-item" style={{ width: "100%" }}>
             <button
               className="login-btn-nav"
               style={{ width: "100%", marginTop: 8 }}
@@ -116,16 +116,8 @@ export default function Navbar() {
             >
               Đăng xuất
             </button>
-          ) : (
-            <button
-              className="login-btn-nav"
-              style={{ width: "100%", marginTop: 8 }}
-              onClick={() => { setMenuOpen(false); actions.openModal("login"); }}
-            >
-              Admin
-            </button>
-          )}
-        </li>
+          </li>
+        )}
       </ul>
 
       {/* Desktop right side */}
@@ -157,15 +149,6 @@ export default function Navbar() {
               Đăng xuất
             </button>
           </>
-        )}
-        {!isAdmin && (
-          <button
-            className="login-btn-nav"
-            id="loginBtn"
-            onClick={() => actions.openModal("login")}
-          >
-            Admin
-          </button>
         )}
       </div>
     </nav>

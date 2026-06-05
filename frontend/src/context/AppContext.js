@@ -88,21 +88,31 @@ export function AppProvider({ children }) {
       });
   }, []);
 
-  // Kiểm tra token hiện tại
+  // Xác minh token với server khi tải trang; token hỏng/hết hạn → tự đăng xuất.
   useEffect(() => {
-    if (state.token) {
-      dispatch({ type: "LOGIN", payload: state.token });
-    }
+    if (!state.token) return;
+    authAPI
+      .verify()
+      .then(() => dispatch({ type: "LOGIN", payload: state.token }))
+      .catch(() => {
+        localStorage.removeItem("pl_token");
+        dispatch({ type: "LOGOUT" });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Gắn class lên <body> để CSS hiện/ẩn các nút chỉnh sửa của admin.
+  useEffect(() => {
+    document.body.classList.toggle("admin-logged", state.isAdmin);
+  }, [state.isAdmin]);
 
   // Actions
   const actions = {
     login: async (username, password) => {
-      const res = await authAPI.login(username, password);
-      const { token } = res.data;
+      const { token } = await authAPI.login(username, password); // backend: { success, token }
       localStorage.setItem("pl_token", token);
       dispatch({ type: "LOGIN", payload: token });
-      return res.data;
+      return token;
     },
 
     logout: async () => {
@@ -117,10 +127,16 @@ export function AppProvider({ children }) {
     },
 
     updateImages: async (key, value) => {
+      const prev = state.images[key];
       dispatch({ type: "SET_IMAGES", payload: { [key]: value } });
-      await import("../services/api").then(({ imageAPI }) =>
-        imageAPI.updateConfig(key, value)
-      );
+      try {
+        const { imageAPI } = await import("../services/api");
+        await imageAPI.updateConfig(key, value);
+      } catch (err) {
+        // Lưu thất bại (vd ảnh quá lớn) → hoàn tác & báo lỗi, tránh crash overlay.
+        dispatch({ type: "SET_IMAGES", payload: { [key]: prev } });
+        alert(err?.response?.data?.message || "Lưu ảnh thất bại. Vui lòng thử ảnh nhỏ hơn.");
+      }
     },
 
     loadStats: async () => {

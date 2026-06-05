@@ -1,0 +1,284 @@
+/* enhancements.css — bù các class React dùng mà bộ CSS gốc chưa có + tinh chỉnh hài hòa.
+   Toàn bộ dùng lại design tokens trong variables.css để giữ giao diện đồng nhất. */
+
+/* ── Cho phép nút admin nổi trên thẻ ───────────────────────────── */
+.event-card,
+.video-card,
+.news-card {
+  position: relative;
+}
+
+/* ── Hành động admin (Sửa / Xóa) trên từng thẻ ─────────────────── */
+.admin-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.event-card .admin-card-actions,
+.video-card .admin-card-actions,
+.news-card .admin-card-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  margin-top: 0;
+  z-index: 5;
+}
+.btn-xs {
+  padding: 5px 11px !important;
+  font-size: 0.72rem !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow);
+}
+/* Nền kính giúp nút Sửa/Xóa luôn đọc rõ khi nằm trên ảnh */
+.admin-card-actions .btn {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.admin-card-actions .btn-outline {
+  background: var(--glass-bg-hover);
+  border-width: 1px !important;
+}
+.admin-card-actions .btn-danger {
+  background: #ea4335;
+}
+/* Nút Ghim khi đang được ghim → vàng mù tạt */
+.admin-card-actions .btn-pin-active {
+  background: var(--cta) !important;
+  color: #fff !important;
+  border: 1px solid var(--cta-hover) !important;
+}
+
+/* ── Nhãn "Đã ghim" trên thẻ tin tức / video ───────────────────── */
+.pin-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-cond);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: var(--cta);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Thẻ đã ghim: viền vàng nổi bật nhẹ */
+.news-card.is-pinned,
+.video-card.is-pinned {
+  border-color: var(--cta) !important;
+  box-shadow: 0 0 0 2px rgba(212, 160, 23, 0.25), var(--shadow) !important;
+}
+
+/* Lộ trình (timeline) dùng style .tm-roadmap-item / .week-col / .content-col
+   trong gioi-thieu.css — không định nghĩa lại ở đây để tránh đè layout. */
+
+/* ── Bộ lọc danh mục Tin tức ────────────────────────────────────── */
+.news-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.category-btn {
+  font-family: var(--font-cond);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--bg-white);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.category-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  transform: translateY(-1px);
+}
+.category-btn.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+}
+
+/* ── Tin nổi bật chiếm 2 cột ───────────────────────────────────── */
+.news-card-featured {
+  grid-column: span 2;
+}
+@media (max-width: 700px) {
+  .news-card-featured {
+    grid-column: span 1;
+  }
+}
+
+/* ── Lớp phủ nút play khi hover thẻ video ──────────────────────── */
+.vc-play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.vc-play-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  padding-left: 4px; /* căn giữa quang học cho glyph ▶ */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transform: scale(0.85);
+  transition: transform var(--transition);
+}
+.video-card:hover .vc-play-overlay {
+  opacity: 1;
+}
+.video-card:hover .vc-play-btn {
+  transform: scale(1);
+}
+
+/* ── Phân trang (tối ưu giao diện) ───────────────────────────────── */
+/* Wrap chuyển thành cột: dòng tóm tắt ở trên, dãy nút ở dưới */
+.pagination-wrap {
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Dòng tóm tắt "Hiển thị X–Y trong tổng Z" */
+.pagination-info {
+  font-family: var(--font-cond);
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+  margin: 0;
+}
+.pagination-info strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* Dãy nút phân trang */
+.pagination-controls {
+  display: flex;
+  flex-wrap: wrap; /* nhiều trang vẫn xuống dòng gọn, không vỡ layout */
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-btn {
+  min-width: 42px; /* các nút số rộng đều nhau */
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  user-select: none;
+}
+
+/* Hover số trang: nâng nhẹ, không đổi nền (chỉ active mới tô xanh) */
+.page-btn:not(.active):not(:disabled):not(.ellipsis):hover {
+  background: var(--blue-light);
+  border-color: var(--blue);
+  color: var(--blue);
+  transform: translateY(-2px);
+}
+
+/* Trang đang chọn: nổi bật bằng nền xanh + shadow */
+.page-btn.active {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+  box-shadow: 0 4px 14px rgba(26, 115, 232, 0.35);
+  cursor: default;
+}
+
+/* Nút Trước/Sau: rộng hơn, có nhãn chữ */
+.page-btn.page-nav {
+  gap: 4px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+}
+
+/* Dấu … rút gọn: không phải nút bấm */
+.page-btn.ellipsis {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-light);
+  cursor: default;
+  pointer-events: none;
+  min-width: auto;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* Mobile: ẩn nhãn chữ "Trước/Sau", chỉ giữ mũi tên cho gọn */
+@media (max-width: 480px) {
+  .page-nav-text {
+    display: none;
+  }
+  .page-btn.page-nav {
+    padding: 8px;
+    min-width: 42px;
+  }
+}
+
+/* ── Khu vực nút "+ Thêm" của admin ────────────────────────────── */
+.admin-add-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+/* ── Ảnh xem trước trong modal ─────────────────────────────────── */
+.news-img-preview {
+  max-width: 100%;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin-top: 10px;
+}
+
+/* ── Khung nhập tag ─────────────────────────────────────────────── */
+.tags-input-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+}
+.tags-input-wrap input {
+  border: none !important;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+  padding: 4px;
+}
+
+/* ── Tiêu đề phụ trong modal giải thưởng ───────────────────────── */
+.modal-sub-title {
+  font-family: var(--font-cond);
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin: 4px 0 8px;
+  color: var(--text);
+}

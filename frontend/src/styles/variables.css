@@ -1,12 +1,16 @@
 /* variables.css — Design System, Variables, Resets, Typography & Common Components */
 
 :root {
-  /* Color Palette */
-  --blue: #1a73e8;
-  --blue-dark: #1558b0;
-  --blue-light: rgba(26, 115, 232, 0.15);
-  --yellow: #ffd600;
-  --yellow-dark: #f9a825;
+  /* Color Palette — Xanh biển + Vàng mù tạt */
+  --blue: #3d81db;          /* xanh chủ đạo */
+  --blue-dark: #1e5aa8;     /* navy đậm (navbar, hover) */
+  --blue-light: rgba(61, 129, 219, 0.14);
+  --blue-link: #4f8cff;     /* link / menu active */
+  --navy: #1e5aa8;
+  --yellow: #d9ab30;        /* vàng mù tạt (accent) */
+  --yellow-dark: #b8860b;   /* vàng đậm (hover) */
+  --cta: #d4a017;           /* nút CTA chính */
+  --cta-hover: #b8860b;
   --bg: #ffffff;
   --bg-white: #ffffff;
   --text: #0f172a;
@@ -212,12 +216,12 @@ img {
 }
 
 .btn-yellow {
-  background: var(--yellow);
-  color: var(--text);
+  background: var(--cta);
+  color: #fff;
 }
 
 .btn-yellow:hover {
-  background: var(--yellow-dark);
+  background: var(--cta-hover);
   box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }

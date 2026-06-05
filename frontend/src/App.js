@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { AppProvider } from "./context/AppContext";
+import useScrollReveal from "./hooks/useScrollReveal";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Introduction from "./components/Introduction";
@@ -13,6 +14,13 @@ import Chatbot from "./components/Chatbot";
 import "./App.css";
 
 export default function App() {
+  useScrollReveal();
+
+  // Kích hoạt hiệu ứng xuất hiện cho navbar & hero ngay khi tải xong.
+  useEffect(() => {
+    document.body.classList.add("loaded");
+  }, []);
+
   return (
     <AppProvider>
       <Navbar />

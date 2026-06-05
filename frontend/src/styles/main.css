@@ -1,7 +1,6 @@
 /* main.css — Entry stylesheet importing all module files in correct cascade order */
 
 @import 'variables.css';
-@import 'preloader.css';
 @import 'navbar.css';
 @import 'home.css';
 @import 'gioi-thieu.css';
@@ -12,3 +11,4 @@
 @import 'modals.css';
 @import 'footer.css';
 @import 'responsive.css';
+@import 'enhancements.css';

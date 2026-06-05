@@ -1,9 +1,14 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useApp } from "../context/AppContext";
 import { newsAPI } from "../services/api";
+import Pagination from "./Pagination";
 
 const CATEGORIES = ["Tất cả", "THÔNG BÁO", "KẾT QUẢ", "VĐV NỔI BẬT", "HƯỚNG DẪN", "SỰ KIỆN"];
 const NEWS_PER_PAGE = 6;
+
+// Lưu các tin đã xem trong phiên hiện tại (biến bộ nhớ → tự reset khi load lại
+// trang). Mỗi tin chỉ tính 1 lượt cho tới khi người dùng tải lại cả trang.
+const viewedNews = new Set();
 
 export default function News() {
   const { state, actions } = useApp();
@@ -15,6 +20,16 @@ export default function News() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [newsPerPage, setNewsPerPage] = useState(window.innerWidth < 768 ? 3 : 6);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setNewsPerPage(window.innerWidth < 768 ? 3 : 6);
+      setPage(1); // Reset page on resize
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const load = () => {
     setLoading(true);
@@ -50,22 +65,25 @@ export default function News() {
     setPage(1);
   }, [activeCategory, searchQuery, news]);
 
-  const totalPages = Math.ceil(filtered.length / NEWS_PER_PAGE);
-  const paginated = filtered.slice((page - 1) * NEWS_PER_PAGE, page * NEWS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / newsPerPage);
+  const paginated = filtered.slice((page - 1) * newsPerPage, page * newsPerPage);
 
   const openDetail = async (item) => {
     actions.openModal("newsDetail", { news: item });
-    // increment view count
+    // Chỉ tính 1 lượt/phiên — bỏ qua nếu đã xem (chống spam khi bấm liên tục).
+    if (viewedNews.has(item.id)) return;
+    viewedNews.add(item.id);
+    // increment view count — backend khớp theo id số, phải truyền item.id (không phải _id)
     try {
-      await newsAPI.incrementView(item._id || item.id);
+      await newsAPI.incrementView(item.id);
       setNews((prev) =>
         prev.map((n) =>
-          (n._id || n.id) === (item._id || item.id)
-            ? { ...n, views: (n.views || 0) + 1 }
-            : n
+          n.id === item.id ? { ...n, views: (n.views || 0) + 1 } : n
         )
       );
-    } catch (_) {}
+    } catch (_) {
+      viewedNews.delete(item.id); // lỗi mạng → cho phép thử lại lần sau
+    }
   };
 
   return (
@@ -127,7 +145,11 @@ export default function News() {
                 }}
                 onDelete={(e) => {
                   e.stopPropagation();
-                  handleDeleteNews(item._id || item.id, load);
+                  handleDeleteNews(item.id, load);
+                }}
+                onPin={(e) => {
+                  e.stopPropagation();
+                  handleTogglePin(item, load);
                 }}
               />
             ))
@@ -135,32 +157,29 @@ export default function News() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="pagination-wrap reveal" style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 32 }}>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                className={`page-btn${p === page ? " active" : ""}`}
-                onClick={() => setPage(p)}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        )}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={newsPerPage}
+          onChange={(p) => {
+            setPage(p);
+            document.getElementById("tin-tuc")?.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
       </div>
     </section>
   );
 }
 
-function NewsCard({ item, isAdmin, fallback, onClick, onEdit, onDelete }) {
+function NewsCard({ item, isAdmin, fallback, onClick, onEdit, onDelete, onPin }) {
   const dateStr = item.createdAt
     ? new Date(item.createdAt).toLocaleDateString("vi-VN")
     : "";
 
   return (
     <div
-      className={`news-card${item.featured ? " news-card-featured" : ""}`}
+      className={`news-card${item.featured ? " news-card-featured" : ""}${item.pinned ? " is-pinned" : ""}`}
       onClick={onClick}
       style={{ cursor: "pointer" }}
     >
@@ -175,6 +194,7 @@ function NewsCard({ item, isAdmin, fallback, onClick, onEdit, onDelete }) {
           <div className="nc-img-placeholder" />
         )}
         <span className="nc-cat">{item.category || "THÔNG BÁO"}</span>
+        {item.pinned && <span className="pin-badge">📌 Đã ghim</span>}
       </div>
       <div className="nc-body">
         <h4 className="nc-title">{item.title}</h4>
@@ -185,6 +205,13 @@ function NewsCard({ item, isAdmin, fallback, onClick, onEdit, onDelete }) {
         </div>
         {isAdmin && (
           <div className="admin-card-actions" onClick={(e) => e.stopPropagation()}>
+            <button
+              className={`btn btn-xs ${item.pinned ? "btn-pin-active" : "btn-outline"}`}
+              onClick={onPin}
+              title={item.pinned ? "Bỏ ghim" : "Ghim lên đầu"}
+            >
+              📌 {item.pinned ? "Bỏ ghim" : "Ghim"}
+            </button>
             <button className="btn btn-outline btn-xs" onClick={onEdit}>✏️ Sửa</button>
             <button className="btn btn-danger btn-xs" onClick={onDelete}>🗑️ Xóa</button>
           </div>
@@ -192,6 +219,11 @@ function NewsCard({ item, isAdmin, fallback, onClick, onEdit, onDelete }) {
       </div>
     </div>
   );
+}
+
+async function handleTogglePin(item, reload) {
+  await newsAPI.update(item.id, { pinned: !item.pinned });
+  reload();
 }
 
 async function handleDeleteNews(id, reload) {

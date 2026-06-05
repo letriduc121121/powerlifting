@@ -3,13 +3,22 @@
 const bcrypt = require('bcryptjs');
 const Admin  = require('../models/Admin');
 
+const USERNAME = 'admin';
+const PASSWORD = process.env.ADMIN_PASSWORD || 'Powerlifting20040509@';
+
 module.exports = async function seedAdmin() {
   try {
-    const exists = await Admin.findOne({ username: 'admin' });
-    if (!exists) {
-      const hashed = await bcrypt.hash('123456', 10);
-      await Admin.create({ username: 'admin', password: hashed });
-      console.log('Default admin seeded (admin / 123456).');
+    const hashed = await bcrypt.hash(PASSWORD, 10);
+    const admin = await Admin.findOne({ username: USERNAME });
+
+    if (!admin) {
+      await Admin.create({ username: USERNAME, password: hashed });
+      console.log('Default admin seeded.');
+    } else if (!(await bcrypt.compare(PASSWORD, admin.password))) {
+      // Đồng bộ mật khẩu với cấu hình hiện tại khi nó thay đổi.
+      admin.password = hashed;
+      await admin.save();
+      console.log('Admin password updated.');
     }
   } catch (err) {
     console.error('seedAdmin error:', err.message);

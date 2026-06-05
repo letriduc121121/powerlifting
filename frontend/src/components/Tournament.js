@@ -15,6 +15,14 @@ const DEFAULT_EVENTS = [
   { id: 3, icon: "🏋️", name: "DEADLIFT", desc: "Kéo tạ từ sàn lên đến khi đứng thẳng, vai sau, hông khóa." },
 ];
 
+const DEFAULT_TOURNAMENT_ROADMAP = [
+  { id: 1, weekStart: 1, weekEnd: 2, title: "NỀN TẢNG", content: "Ôn luyện kỹ thuật, đặt trọng lượng opener hợp lý cho từng bài." },
+  { id: 2, weekStart: 3, weekEnd: 4, title: "ACCUMULATION", content: "Tăng khối lượng tập, 3–5 set x 3–5 reps ở 75–80% 1RM." },
+  { id: 3, weekStart: 5, weekEnd: 6, title: "INTENSIFICATION", content: "Giảm số set, tăng % tạ lên 85–92%. Tập kỹ với lệnh trọng tài." },
+  { id: 4, weekStart: 7, weekEnd: 7, title: "PEAKING", content: "Test mức tạ opener, secondary, thứ 3. Nghỉ đủ giấc, tối ưu dinh dưỡng." },
+  { id: 5, weekStart: 8, weekEnd: 8, title: "DELOAD & THI ĐẤU", content: "Tập nhẹ 2–3 ngày đầu, dừng 2–3 ngày trước thi. Ngủ đủ, cân nước hợp lý." },
+];
+
 export default function Tournament() {
   const { state, actions } = useApp();
   const { isAdmin, config } = state;
@@ -23,6 +31,7 @@ export default function Tournament() {
   const [prizes, setPrizes] = useState(DEFAULT_PRIZES);
   const [roadmap, setRoadmap] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [loadingRoadmap, setLoadingRoadmap] = useState(true);
 
   const reloadEvents = () => {
     eventAPI.getAll()
@@ -32,9 +41,11 @@ export default function Tournament() {
   };
 
   const reloadRoadmap = () => {
+    setLoadingRoadmap(true);
     roadmapAPI.getAll("tournament")
       .then((res) => setRoadmap(res.data || []))
-      .catch(() => setRoadmap([]));
+      .catch(() => setRoadmap(DEFAULT_TOURNAMENT_ROADMAP))
+      .finally(() => setLoadingRoadmap(false));
   };
 
   useEffect(() => {
@@ -109,11 +120,11 @@ export default function Tournament() {
           ) : (
             events.map((ev) => (
               <EventCard
-                key={ev._id || ev.id}
+                key={ev.id || ev._id}
                 event={ev}
                 isAdmin={isAdmin}
                 onEdit={() => actions.openModal("addEvent", { editItem: ev, onSaved: reloadEvents })}
-                onDelete={() => handleDeleteEvent(ev._id || ev.id, reloadEvents)}
+                onDelete={() => handleDeleteEvent(ev.id || ev._id, reloadEvents)}
               />
             ))
           )}
@@ -143,24 +154,26 @@ export default function Tournament() {
           )}
         </div>
         <div className="prizes-row reveal" id="prizesRow">
-          <PrizeCard tier="gold" emoji="🥇" label="Vô Địch" prize={prizes.gold} />
-          <PrizeCard tier="silver" emoji="🥈" label="Á Quân" prize={prizes.silver} />
-          <PrizeCard tier="bronze" emoji="🥉" label="Hạng Ba" prize={prizes.bronze} />
+          <PrizeCard tier="silver" pos={2} emoji="🥈" label="Á Quân" prize={prizes.silver} />
+          <PrizeCard tier="gold" pos={1} emoji="🥇" label="Vô Địch" prize={prizes.gold} />
+          <PrizeCard tier="bronze" pos={3} emoji="🥉" label="Hạng Ba" prize={prizes.bronze} />
         </div>
 
         {/* Tournament Roadmap */}
         <div className="sub-heading">Lộ Trình Chuẩn Bị Thi Đấu</div>
         <div className="tm-roadmap reveal" id="tmRoadmap">
-          {roadmap.length === 0 ? (
+          {loadingRoadmap ? (
+            <p style={{ color: "var(--text-muted)", padding: "10px 0" }}>Đang tải...</p>
+          ) : roadmap.length === 0 ? (
             <p style={{ color: "var(--text-muted)", padding: "10px 0" }}>Chưa có lộ trình.</p>
           ) : (
             roadmap.map((step, idx) => (
               <RoadmapCard
-                key={step._id || step.id || idx}
+                key={step.id || step._id || idx}
                 step={step}
                 isAdmin={isAdmin}
-                onEdit={() => actions.openModal("addRoadmap", { type: "tournament", editItem: step, onSaved: reloadRoadmap })}
-                onDelete={() => handleDeleteRoadmap(step._id || step.id, reloadRoadmap)}
+                onEdit={() => actions.openModal("addRoadmap", { type: "tournament", editItem: step, onSaved: reloadRoadmap, existing: roadmap })}
+                onDelete={() => handleDeleteRoadmap(step.id || step._id, reloadRoadmap)}
               />
             ))
           )}
@@ -169,7 +182,7 @@ export default function Tournament() {
           <div className="admin-add-wrap">
             <button
               className="btn btn-outline btn-sm add-card-btn"
-              onClick={() => actions.openModal("addRoadmap", { type: "tournament", onSaved: reloadRoadmap })}
+              onClick={() => actions.openModal("addRoadmap", { type: "tournament", onSaved: reloadRoadmap, existing: roadmap })}
             >
               + Thêm Tuần
             </button>
@@ -222,33 +235,37 @@ function EventCard({ event, isAdmin, onEdit, onDelete }) {
   );
 }
 
-function PrizeCard({ tier, emoji, label, prize }) {
+function PrizeCard({ tier, pos, emoji, label, prize }) {
   return (
-    <div className={`prize-card prize-${tier}`}>
-      <div className="prize-emoji">{emoji}</div>
-      <div className="prize-label">{label}</div>
-      <div className="prize-amount">{prize?.amount || "—"}</div>
-      <div className="prize-desc">{prize?.desc || ""}</div>
+    <div className={`prize-card ${tier}`}>
+      <div className="p-pos">{pos}</div>
+      <div className="p-medal">{emoji}</div>
+      <h4>{prize?.title || label}</h4>
+      <p className="p-money">{prize?.amount || "—"}</p>
+      <small>{prize?.desc || "Mỗi hạng cân"}</small>
     </div>
   );
 }
 
 function RoadmapCard({ step, isAdmin, onEdit, onDelete }) {
-  const weekLabel =
-    step.weekEnd && step.weekEnd !== step.weekStart
+  const weekLabel = step.week
+    ? step.week
+    : step.weekEnd && step.weekEnd !== step.weekStart
       ? `Tuần ${step.weekStart}–${step.weekEnd}`
       : `Tuần ${step.weekStart}`;
   return (
-    <div className="tm-card">
-      <div className="tm-week">{weekLabel}</div>
-      <div className="tm-title">{step.title}</div>
-      <div className="tm-content">{step.content}</div>
-      {isAdmin && (
-        <div className="admin-card-actions">
-          <button className="btn btn-outline btn-xs" onClick={onEdit}>✏️ Sửa</button>
-          <button className="btn btn-danger btn-xs" onClick={onDelete}>🗑️ Xóa</button>
-        </div>
-      )}
+    <div className="tm-roadmap-item">
+      <div className="week-col">{weekLabel}</div>
+      <div className="content-col">
+        <h4>{step.title}</h4>
+        <p>{step.content}</p>
+        {isAdmin && (
+          <div className="card-admin-btns">
+            <button className="btn-ghost-sm" onClick={onEdit}>✏️ Sửa</button>
+            <button className="btn-ghost-sm" style={{ color: "#EA4335" }} onClick={onDelete}>🗑 Xóa</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
