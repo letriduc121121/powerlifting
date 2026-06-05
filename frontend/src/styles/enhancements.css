@@ -27,7 +27,52 @@
   padding: 5px 11px !important;
   font-size: 0.72rem !important;
   border-radius: 8px !important;
+  box-shadow: var(--shadow);
+}
+/* Nền kính giúp nút Sửa/Xóa luôn đọc rõ khi nằm trên ảnh */
+.admin-card-actions .btn {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.admin-card-actions .btn-outline {
+  background: var(--glass-bg-hover);
+  border-width: 1px !important;
+}
+.admin-card-actions .btn-danger {
+  background: #ea4335;
+}
+/* Nút Ghim khi đang được ghim → vàng mù tạt */
+.admin-card-actions .btn-pin-active {
+  background: var(--cta) !important;
+  color: #fff !important;
+  border: 1px solid var(--cta-hover) !important;
+}
+
+/* ── Nhãn "Đã ghim" trên thẻ tin tức / video ───────────────────── */
+.pin-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-cond);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: var(--cta);
+  padding: 4px 10px;
+  border-radius: 9999px;
   box-shadow: var(--shadow-sm);
+}
+
+/* Thẻ đã ghim: viền vàng nổi bật nhẹ */
+.news-card.is-pinned,
+.video-card.is-pinned {
+  border-color: var(--cta) !important;
+  box-shadow: 0 0 0 2px rgba(212, 160, 23, 0.25), var(--shadow) !important;
 }
 
 /* Lộ trình (timeline) dùng style .tm-roadmap-item / .week-col / .content-col
@@ -75,24 +120,37 @@
   }
 }
 
-/* ── Lớp phủ ▶ khi hover thẻ video ─────────────────────────────── */
-.vc-thumb {
-  position: relative;
-}
+/* ── Lớp phủ nút play khi hover thẻ video ──────────────────────── */
 .vc-play-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.4rem;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(0, 0, 0, 0.3);
   opacity: 0;
   transition: opacity var(--transition);
 }
+.vc-play-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  padding-left: 4px; /* căn giữa quang học cho glyph ▶ */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transform: scale(0.85);
+  transition: transform var(--transition);
+}
 .video-card:hover .vc-play-overlay {
   opacity: 1;
+}
+.video-card:hover .vc-play-btn {
+  transform: scale(1);
 }
 
 /* ── Phân trang (tối ưu giao diện) ───────────────────────────────── */

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { eventAPI, roadmapAPI, videoAPI, newsAPI, prizeAPI } from "../services/api";
+import { resizeImage } from "../utils/resizeImage";
 
 // Thêm class `.open` ngay sau khi mount để kích hoạt hiệu ứng fade/scale vào.
 function useOpenTransition() {
@@ -175,7 +176,7 @@ function AddEventForm({ data }) {
   });
 
   const save = async () => {
-    if (isEdit) await eventAPI.update(editItem._id || editItem.id, form);
+    if (isEdit) await eventAPI.update(editItem.id || editItem._id, form);
     else await eventAPI.create(form);
     onSaved?.();
     actions.closeModal();
@@ -216,7 +217,7 @@ export function AddRoadmapModal() {
 
 function AddRoadmapForm({ data }) {
   const { actions } = useApp();
-  const { editItem, onSaved, type = "tournament" } = data;
+  const { editItem, onSaved, type = "tournament", existing = [] } = data;
   const isEdit = !!editItem;
   const [form, setForm] = useState({
     weekStart: editItem?.weekStart || "",
@@ -226,10 +227,38 @@ function AddRoadmapForm({ data }) {
     type: editItem?.type || type,
   });
 
-  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
+  const [errors, setErrors] = useState({});
+
+  const set = (key) => (e) => {
+    setForm({ ...form, [key]: e.target.value });
+    if (errors[key]) setErrors((err) => ({ ...err, [key]: "" }));
+  };
 
   const save = async () => {
-    if (isEdit) await roadmapAPI.update(editItem._id || editItem.id, form);
+    if (!form.weekStart) {
+      setErrors({ weekStart: "Vui lòng nhập tuần bắt đầu." });
+      return;
+    }
+    const targetStart = Number(form.weekStart);
+    const targetEnd = form.weekEnd ? Number(form.weekEnd) : targetStart;
+    
+    if (targetEnd < targetStart) {
+      setErrors({ weekStart: "Tuần kết thúc không thể nhỏ hơn tuần bắt đầu." });
+      return;
+    }
+
+    const isDuplicate = existing.some(s => {
+      if (String(s.id || s._id) === String(editItem?.id || editItem?._id)) return false;
+      const sStart = Number(s.weekStart);
+      const sEnd = s.weekEnd ? Number(s.weekEnd) : sStart;
+      return Math.max(targetStart, sStart) <= Math.min(targetEnd, sEnd);
+    });
+
+    if (isDuplicate) {
+      setErrors({ weekStart: `Khoảng thời gian này bị trùng lặp với lộ trình đã có.` });
+      return;
+    }
+    if (isEdit) await roadmapAPI.update(editItem.id || editItem._id, form);
     else await roadmapAPI.create(form);
     onSaved?.();
     actions.closeModal();
@@ -248,6 +277,7 @@ function AddRoadmapForm({ data }) {
             <input type="number" min={1} max={99} placeholder="Đến (Tùy chọn)" value={form.weekEnd}
               style={{ width: 100 }} onChange={set("weekEnd")} />
           </div>
+          {errors.weekStart && <div style={{ color: "#ea4335", fontSize: "0.85rem", marginTop: 4 }}>{errors.weekStart}</div>}
         </div>
         <div className="form-group">
           <label>Tiêu đề bài học</label>
@@ -275,7 +305,7 @@ export function AddVideoModal() {
 
 function AddVideoForm({ data }) {
   const { actions } = useApp();
-  const { editItem, onSaved } = data;
+  const { editItem, onSaved, existingTags = [] } = data;
   const isEdit = !!editItem;
 
   const [form, setForm] = useState({
@@ -285,8 +315,12 @@ function AddVideoForm({ data }) {
     tags: [...(editItem?.tags || [])],
   });
   const [tagInput, setTagInput] = useState("");
+  const [errors, setErrors] = useState({});
 
-  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const set = (key) => (e) => {
+    setForm((f) => ({ ...f, [key]: e.target.value }));
+    if (errors[key]) setErrors((err) => ({ ...err, [key]: "" }));
+  };
 
   const addTag = (e) => {
     if (e.key === "Enter" && tagInput.trim()) {
@@ -300,16 +334,30 @@ function AddVideoForm({ data }) {
   const removeTag = (t) =>
     setForm((f) => ({ ...f, tags: f.tags.filter((x) => x !== t) }));
 
-  const onThumb = (e) => {
+  const onThumb = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setForm((f) => ({ ...f, thumbnail: ev.target.result }));
-    reader.readAsDataURL(file);
+    try {
+      const dataUrl = await resizeImage(file, { maxDim: 1280, format: "jpeg" });
+      setForm((f) => ({ ...f, thumbnail: dataUrl }));
+    } catch (err) {
+      alert("Không xử lý được ảnh: " + err.message);
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const save = async () => {
-    if (isEdit) await videoAPI.update(editItem._id || editItem.id, form);
+    const newErrors = {};
+    if (!form.name.trim()) newErrors.name = "Vui lòng nhập tên video.";
+    if (!form.url.trim()) newErrors.url = "Vui lòng nhập URL video.";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    if (isEdit) await videoAPI.update(editItem.id || editItem._id, form);
     else await videoAPI.create(form);
     onSaved?.();
     actions.closeModal();
@@ -321,10 +369,12 @@ function AddVideoForm({ data }) {
         <div className="form-group">
           <label>Tên video</label>
           <input type="text" value={form.name} placeholder="Tên bài hướng dẫn..." onChange={set("name")} />
+          {errors.name && <div style={{ color: "#ea4335", fontSize: "0.85rem", marginTop: 4 }}>{errors.name}</div>}
         </div>
         <div className="form-group">
           <label>URL Video (YouTube / Vimeo / Drive)</label>
           <input type="text" value={form.url} placeholder="https://www.youtube.com/watch?v=..." onChange={set("url")} />
+          {errors.url && <div style={{ color: "#ea4335", fontSize: "0.85rem", marginTop: 4 }}>{errors.url}</div>}
         </div>
         <div className="form-group">
           <label>Ảnh thumbnail (tùy chọn)</label>
@@ -349,6 +399,19 @@ function AddVideoForm({ data }) {
             <input type="text" value={tagInput} placeholder="Thêm tag..."
               onChange={(e) => setTagInput(e.target.value)} onKeyDown={addTag} />
           </div>
+          {existingTags.filter(t => !form.tags.includes(t)).length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginRight: 8 }}>Gợi ý:</span>
+              {existingTags.filter(t => !form.tags.includes(t)).map(t => (
+                <span key={t} onClick={() => setForm(f => ({ ...f, tags: [...f.tags, t] }))} style={{
+                  display: "inline-block", background: "var(--bg-light)", color: "var(--text)", border: "1px solid var(--border)",
+                  borderRadius: 4, padding: "2px 8px", fontSize: "0.82rem", margin: 2, cursor: "pointer"
+                }}>
+                  + {t}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <ModalFooter>
@@ -380,19 +443,38 @@ function AddNewsForm({ data }) {
     featured: editItem?.featured || 0,
   });
 
-  const set = (key, transform = (v) => v) => (e) =>
-    setForm((f) => ({ ...f, [key]: transform(e.target.value) }));
+  const [errors, setErrors] = useState({});
 
-  const onImage = (e) => {
+  const set = (key, transform = (v) => v) => (e) => {
+    setForm((f) => ({ ...f, [key]: transform(e.target.value) }));
+    if (errors[key]) setErrors((err) => ({ ...err, [key]: "" }));
+  };
+
+  const onImage = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setForm((f) => ({ ...f, image: ev.target.result }));
-    reader.readAsDataURL(file);
+    try {
+      const dataUrl = await resizeImage(file, { maxDim: 1600, format: "jpeg" });
+      setForm((f) => ({ ...f, image: dataUrl }));
+    } catch (err) {
+      alert("Không xử lý được ảnh: " + err.message);
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const save = async () => {
-    if (isEdit) await newsAPI.update(editItem._id || editItem.id, form);
+    const newErrors = {};
+    if (!form.title.trim()) newErrors.title = "Vui lòng nhập tiêu đề bài viết.";
+    if (!form.desc.trim()) newErrors.desc = "Vui lòng nhập tóm tắt ngắn.";
+    if (!form.fullContent.trim()) newErrors.fullContent = "Vui lòng nhập nội dung chi tiết.";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    if (isEdit) await newsAPI.update(editItem.id || editItem._id, form);
     else await newsAPI.create(form);
     onSaved?.();
     actions.closeModal();
@@ -404,6 +486,7 @@ function AddNewsForm({ data }) {
         <div className="form-group">
           <label>Tiêu đề bài viết</label>
           <input type="text" value={form.title} placeholder="Tiêu đề..." onChange={set("title")} />
+          {errors.title && <div style={{ color: "#ea4335", fontSize: "0.85rem", marginTop: 4 }}>{errors.title}</div>}
         </div>
         <div className="form-group">
           <label>Danh mục</label>
@@ -416,10 +499,12 @@ function AddNewsForm({ data }) {
         <div className="form-group">
           <label>Tóm tắt ngắn (1-2 câu)</label>
           <textarea rows={2} value={form.desc} placeholder="Hiển thị ở trang danh sách..." onChange={set("desc")} />
+          {errors.desc && <div style={{ color: "#ea4335", fontSize: "0.85rem", marginTop: 4 }}>{errors.desc}</div>}
         </div>
         <div className="form-group">
           <label>Nội dung chi tiết</label>
           <textarea rows={6} value={form.fullContent} placeholder="Viết nội dung bài viết đầy đủ..." onChange={set("fullContent")} />
+          {errors.fullContent && <div style={{ color: "#ea4335", fontSize: "0.85rem", marginTop: 4 }}>{errors.fullContent}</div>}
         </div>
         <div className="form-group">
           <label>Hình ảnh bài viết</label>
@@ -597,7 +682,6 @@ const IMAGE_SECTIONS = [
   { key: "heroBg", title: "2. ẢNH NỀN HERO" },
   { key: "chatbotLogo", title: "3. LOGO CHAT BOX (MASCOT)" },
   { key: "newsFallback", title: "4. ẢNH BÀI VIẾT MẶC ĐỊNH (NEWS FALLBACK)" },
-  { key: "videoFallback", title: "5. ẢNH VIDEO MẶC ĐỊNH (VIDEO FALLBACK)" },
 ];
 
 export function ImageConfigModal() {
@@ -607,12 +691,23 @@ export function ImageConfigModal() {
   const previews = state.images || {};
 
   const setImage = (key, value) => actions.updateImages(key, value);
-  const onFile = (key) => (e) => {
+  const onFile = (key) => async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setImage(key, ev.target.result);
-    reader.readAsDataURL(file);
+    try {
+      // Nén ảnh trước khi lưu để không vượt giới hạn 16MB của MongoDB.
+      // Logo & mascot cần nền trong suốt → PNG; ảnh nền/fallback → JPEG cho nhẹ.
+      const transparent = key === "logo" || key === "chatbotLogo";
+      const dataUrl = await resizeImage(file, {
+        maxDim: key === "heroBg" ? 1920 : 1280,
+        format: transparent ? "png" : "jpeg",
+      });
+      setImage(key, dataUrl);
+    } catch (err) {
+      alert("Không xử lý được ảnh: " + err.message);
+    } finally {
+      e.target.value = ""; // cho phép chọn lại cùng tệp
+    }
   };
 
   return (

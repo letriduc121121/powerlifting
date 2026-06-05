@@ -58,7 +58,6 @@ export default function Chatbot() {
 
     setMessages((prev) => [...prev, { role: "user", text: msg }]);
     setInputVal("");
-    setQuickRepliesVisible(false);
 
     setTimeout(() => {
       const reply = getBotReply(msg);
@@ -74,7 +73,7 @@ export default function Chatbot() {
     <>
       {/* Toggle Button */}
       <button
-        className="chatbot-toggle"
+        className={`chatbot-toggle${isOpen ? " open" : ""}`}
         id="chatToggle"
         onClick={() => setIsOpen((v) => !v)}
       >
@@ -98,7 +97,7 @@ export default function Chatbot() {
 
       {/* Chatbox */}
       {isOpen && (
-        <div className="chatbot-box" id="chatBox">
+        <div className="chatbot-box open" id="chatBox">
           {/* Header */}
           <div className="chatbot-header">
             <div

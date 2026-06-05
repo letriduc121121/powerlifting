@@ -12,7 +12,7 @@ export default function Introduction() {
   useEffect(() => {
     roadmapAPI
       .getAll("beginner")
-      .then((res) => setRoadmap(res.data?.length ? res.data : DEFAULT_BEGINNER_ROADMAP))
+      .then((res) => setRoadmap(res.data || []))
       .catch(() => setRoadmap(DEFAULT_BEGINNER_ROADMAP))
       .finally(() => setLoading(false));
   }, []);
@@ -22,9 +22,9 @@ export default function Introduction() {
     actions.openModal("editField", { key, title, value: config[key], isTextarea });
   };
 
-  const handleAddRoadmap = () => actions.openModal("addRoadmap", { type: "beginner", onSaved: reload });
+  const handleAddRoadmap = () => actions.openModal("addRoadmap", { type: "beginner", onSaved: reload, existing: roadmap });
   const handleEditRoadmap = (item) =>
-    actions.openModal("addRoadmap", { type: "beginner", editItem: item, onSaved: reload });
+    actions.openModal("addRoadmap", { type: "beginner", editItem: item, onSaved: reload, existing: roadmap });
 
   const handleDeleteRoadmap = async (id) => {
     if (!window.confirm("Xóa bước này?")) return;
@@ -99,11 +99,11 @@ export default function Introduction() {
             ) : (
               roadmap.map((step, idx) => (
                 <RoadmapCard
-                  key={step._id || step.id || idx}
+                  key={step.id || step._id || idx}
                   step={step}
                   isAdmin={isAdmin}
                   onEdit={() => handleEditRoadmap(step)}
-                  onDelete={() => handleDeleteRoadmap(step._id || step.id)}
+                  onDelete={() => handleDeleteRoadmap(step.id || step._id)}
                 />
               ))
             )}

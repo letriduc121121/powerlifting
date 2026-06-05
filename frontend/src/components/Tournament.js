@@ -31,6 +31,7 @@ export default function Tournament() {
   const [prizes, setPrizes] = useState(DEFAULT_PRIZES);
   const [roadmap, setRoadmap] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [loadingRoadmap, setLoadingRoadmap] = useState(true);
 
   const reloadEvents = () => {
     eventAPI.getAll()
@@ -40,9 +41,11 @@ export default function Tournament() {
   };
 
   const reloadRoadmap = () => {
+    setLoadingRoadmap(true);
     roadmapAPI.getAll("tournament")
-      .then((res) => setRoadmap(res.data?.length ? res.data : DEFAULT_TOURNAMENT_ROADMAP))
-      .catch(() => setRoadmap(DEFAULT_TOURNAMENT_ROADMAP));
+      .then((res) => setRoadmap(res.data || []))
+      .catch(() => setRoadmap(DEFAULT_TOURNAMENT_ROADMAP))
+      .finally(() => setLoadingRoadmap(false));
   };
 
   useEffect(() => {
@@ -117,11 +120,11 @@ export default function Tournament() {
           ) : (
             events.map((ev) => (
               <EventCard
-                key={ev._id || ev.id}
+                key={ev.id || ev._id}
                 event={ev}
                 isAdmin={isAdmin}
                 onEdit={() => actions.openModal("addEvent", { editItem: ev, onSaved: reloadEvents })}
-                onDelete={() => handleDeleteEvent(ev._id || ev.id, reloadEvents)}
+                onDelete={() => handleDeleteEvent(ev.id || ev._id, reloadEvents)}
               />
             ))
           )}
@@ -159,16 +162,18 @@ export default function Tournament() {
         {/* Tournament Roadmap */}
         <div className="sub-heading">Lộ Trình Chuẩn Bị Thi Đấu</div>
         <div className="tm-roadmap reveal" id="tmRoadmap">
-          {roadmap.length === 0 ? (
+          {loadingRoadmap ? (
+            <p style={{ color: "var(--text-muted)", padding: "10px 0" }}>Đang tải...</p>
+          ) : roadmap.length === 0 ? (
             <p style={{ color: "var(--text-muted)", padding: "10px 0" }}>Chưa có lộ trình.</p>
           ) : (
             roadmap.map((step, idx) => (
               <RoadmapCard
-                key={step._id || step.id || idx}
+                key={step.id || step._id || idx}
                 step={step}
                 isAdmin={isAdmin}
-                onEdit={() => actions.openModal("addRoadmap", { type: "tournament", editItem: step, onSaved: reloadRoadmap })}
-                onDelete={() => handleDeleteRoadmap(step._id || step.id, reloadRoadmap)}
+                onEdit={() => actions.openModal("addRoadmap", { type: "tournament", editItem: step, onSaved: reloadRoadmap, existing: roadmap })}
+                onDelete={() => handleDeleteRoadmap(step.id || step._id, reloadRoadmap)}
               />
             ))
           )}
@@ -177,7 +182,7 @@ export default function Tournament() {
           <div className="admin-add-wrap">
             <button
               className="btn btn-outline btn-sm add-card-btn"
-              onClick={() => actions.openModal("addRoadmap", { type: "tournament", onSaved: reloadRoadmap })}
+              onClick={() => actions.openModal("addRoadmap", { type: "tournament", onSaved: reloadRoadmap, existing: roadmap })}
             >
               + Thêm Tuần
             </button>

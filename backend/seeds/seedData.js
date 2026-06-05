@@ -35,17 +35,28 @@ const defaults = {
     { id: 3, name: 'DEADLIFT',    icon: '🏋️', desc: 'Bài thi tổng hợp sức mạnh toàn thân. VĐV nâng tạ từ sàn lên tư thế đứng thẳng hoàn toàn.' },
   ],
   beginnerRoadmap: [
-    { id: 1, week: 'Tuần 1–2', title: 'Nền Tảng Kỹ Thuật',  content: 'Học và luyện kỹ thuật cơ bản cho cả 3 bài. Trọng lượng nhẹ, tập trung form. 3 buổi/tuần.' },
-    { id: 2, week: 'Tuần 3–4', title: 'Xây Nền Sức Mạnh',   content: 'Tăng dần trọng lượng 5–10% mỗi tuần. Thêm các bài phụ trợ: Romanian Deadlift, Paused Squat.' },
-    { id: 3, week: 'Tuần 5–6', title: 'Tập Ngưỡng Cao',      content: 'Tăng cường độ lên 80–90% 1RM. Làm quen với cảm giác tải nặng.' },
-    { id: 4, week: 'Tuần 7–8', title: 'Peaking & Thử Mức',   content: 'Giảm khối lượng, tăng cường độ. Thử 1RM. Chuẩn bị openers cho ngày thi đấu.' },
+    {
+      id: 1, weekStart: 1, weekEnd: 4,
+      title: "Làm Quen Với Kỹ Thuật",
+      content: "Học hình thức đúng cho Squat, Bench Press và Deadlift. Tập với trọng lượng nhẹ, tập trung vào kỹ thuật. 3 buổi/tuần.",
+    },
+    {
+      id: 2, weekStart: 5, weekEnd: 8,
+      title: "Xây Dựng Nền Tảng Sức Mạnh",
+      content: "Tăng dần trọng lượng 2.5-5kg/tuần. Bắt đầu theo dõi khối lượng tập luyện (volume). 4 buổi/tuần.",
+    },
+    {
+      id: 3, weekStart: 9, weekEnd: 12,
+      title: "Chuẩn Bị Thi Đấu",
+      content: "Thực hành các lượt lift theo luật thi đấu. Thử cân nặng mục tiêu cho ngày thi. Tapering 2 tuần cuối.",
+    },
   ],
   tournamentRoadmap: [
-    { id: 1, week: 'Tuần 1–2', title: 'Nền Tảng',        content: 'Ôn luyện kỹ thuật, đặt trọng lượng opener hợp lý cho từng bài.' },
-    { id: 2, week: 'Tuần 3–4', title: 'Accumulation',     content: 'Tăng khối lượng tập, 3–5 set x 3–5 reps ở 75–80% 1RM.' },
-    { id: 3, week: 'Tuần 5–6', title: 'Intensification',  content: 'Giảm số set, tăng % tạ lên 85–92%. Tập kỹ với lệnh trọng tài.' },
-    { id: 4, week: 'Tuần 7',   title: 'Peaking',          content: 'Test mức tạ opener, secondary, thứ 3. Nghỉ đủ giấc, tối ưu dinh dưỡng.' },
-    { id: 5, week: 'Tuần 8',   title: 'Deload & Thi đấu', content: 'Tập nhẹ 2–3 ngày đầu, dừng 2–3 ngày trước thi. Ngủ đủ, cân nước hợp lý.' },
+    { id: 1, weekStart: 1, weekEnd: 2, title: "NỀN TẢNG", content: "Ôn luyện kỹ thuật, đặt trọng lượng opener hợp lý cho từng bài." },
+    { id: 2, weekStart: 3, weekEnd: 4, title: "ACCUMULATION", content: "Tăng khối lượng tập, 3–5 set x 3–5 reps ở 75–80% 1RM." },
+    { id: 3, weekStart: 5, weekEnd: 6, title: "INTENSIFICATION", content: "Giảm số set, tăng % tạ lên 85–92%. Tập kỹ với lệnh trọng tài." },
+    { id: 4, weekStart: 7, weekEnd: 7, title: "PEAKING", content: "Test mức tạ opener, secondary, thứ 3. Nghỉ đủ giấc, tối ưu dinh dưỡng." },
+    { id: 5, weekStart: 8, weekEnd: 8, title: "DELOAD & THI ĐẤU", content: "Tập nhẹ 2–3 ngày đầu, dừng 2–3 ngày trước thi. Ngủ đủ, cân nước hợp lý." },
   ],
 };
 
@@ -113,6 +124,14 @@ module.exports = async function seedData() {
         updates['images.heroBg'] = '/images/hero-bg-v2.png';
         console.log('Migrated: hero background → v2.');
       }
+      if (!appData.beginnerRoadmap || appData.beginnerRoadmap.length === 0) {
+        updates.beginnerRoadmap = defaults.beginnerRoadmap;
+        console.log('Migrated: beginnerRoadmap initialized with defaults.');
+      }
+      if (!appData.tournamentRoadmap || appData.tournamentRoadmap.length === 0) {
+        updates.tournamentRoadmap = defaults.tournamentRoadmap;
+        console.log('Migrated: tournamentRoadmap initialized with defaults.');
+      }
       if (Object.keys(updates).length) {
         await AppData.updateOne({ key: 'main' }, { $set: updates });
       }
@@ -130,6 +149,15 @@ module.exports = async function seedData() {
     if (newsCount === 0) {
       await News.insertMany(defaultNews);
       console.log('Default news seeded.');
+    }
+
+    // Migration: gán pinned=false cho document cũ chưa có field (để sort ghim chuẩn)
+    const [nv, vv] = await Promise.all([
+      News.updateMany({ pinned: { $exists: false } }, { $set: { pinned: false } }),
+      Video.updateMany({ pinned: { $exists: false } }, { $set: { pinned: false } }),
+    ]);
+    if (nv.modifiedCount || vv.modifiedCount) {
+      console.log(`Migrated pinned field: ${nv.modifiedCount} news, ${vv.modifiedCount} videos.`);
     }
   } catch (err) {
     console.error('seedData error:', err.message);

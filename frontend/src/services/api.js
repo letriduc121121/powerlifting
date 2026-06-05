@@ -16,8 +16,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    // Bỏ qua login & verify để caller tự xử lý (hiện thông báo / đăng xuất mượt).
     const url = err.config?.url || "";
-    if (err.response?.status === 401 && !url.includes("/auth/login")) {
+    const skip = url.includes("/auth/login") || url.includes("/auth/verify");
+    if (err.response?.status === 401 && !skip) {
       localStorage.removeItem("pl_token");
       window.location.reload();
     }
@@ -78,6 +80,7 @@ const dedupeGet = (url, transform = (x) => x) => {
 export const authAPI = {
   login: (username, password) =>
     api.post("/auth/login", { username, password }).then((r) => r.data),
+  verify: () => api.get("/auth/verify").then((r) => r.data),
   logout: () => Promise.resolve(),
 };
 
@@ -143,21 +146,24 @@ export const eventAPI = {
   update: async (id, data) => {
     const d = await getAppData();
     const events = (d.events || []).map((e) =>
-      String(e.id) === String(id) ? { ...e, ...data } : e
+      String(e.id || e._id) === String(id) ? { ...e, ...data } : e
     );
     return patchAppData({ events });
   },
   delete: async (id) => {
     const d = await getAppData();
     return patchAppData({
-      events: (d.events || []).filter((e) => String(e.id) !== String(id)),
+      events: (d.events || []).filter((e) => String(e.id || e._id) !== String(id)),
     });
   },
 };
 
 const roadmapKey = (type) => `${type || "tournament"}Roadmap`; // beginnerRoadmap | tournamentRoadmap
 export const roadmapAPI = {
-  getAll: async (type) => ({ data: (await getAppData())[roadmapKey(type)] || [] }),
+  getAll: async (type) => {
+    const list = (await getAppData())[roadmapKey(type)] || [];
+    return { data: [...list].sort((a, b) => Number(a.weekStart) - Number(b.weekStart)) };
+  },
   create: async (data) => {
     const d = await getAppData();
     const key = roadmapKey(data.type);
@@ -167,16 +173,16 @@ export const roadmapAPI = {
     const d = await getAppData();
     const key = roadmapKey(data.type);
     const list = (d[key] || []).map((s) =>
-      String(s.id) === String(id) ? { ...s, ...data } : s
+      String(s.id || s._id) === String(id) ? { ...s, ...data } : s
     );
     return patchAppData({ [key]: list });
   },
   delete: async (id) => {
     const d = await getAppData();
     for (const key of ["beginnerRoadmap", "tournamentRoadmap"]) {
-      if ((d[key] || []).some((s) => String(s.id) === String(id))) {
+      if ((d[key] || []).some((s) => String(s.id || s._id) === String(id))) {
         return patchAppData({
-          [key]: d[key].filter((s) => String(s.id) !== String(id)),
+          [key]: d[key].filter((s) => String(s.id || s._id) !== String(id)),
         });
       }
     }
