@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { eventAPI, roadmapAPI, videoAPI, newsAPI, prizeAPI } from "../services/api";
 import { resizeImage } from "../utils/resizeImage";
+import { Eye, EyeOff } from "lucide-react";
 
 // Thêm class `.open` ngay sau khi mount để kích hoạt hiệu ứng fade/scale vào.
 function useOpenTransition() {
@@ -84,6 +85,7 @@ export function LoginModal() {
 function LoginForm() {
   const { actions } = useApp();
   const [error, setError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -105,7 +107,35 @@ function LoginForm() {
           </div>
           <div className="form-group">
             <label>Mật khẩu</label>
-            <input type="password" name="password" autoComplete="current-password" placeholder="Mật khẩu..." />
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                autoComplete="current-password"
+                placeholder="Mật khẩu..."
+                style={{ paddingRight: "40px" }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-muted)",
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           {error && (
             <p style={{ color: "#ea4335", fontSize: "0.85rem", margin: "0 0 10px" }}>
@@ -378,7 +408,19 @@ function AddVideoForm({ data }) {
         </div>
         <div className="form-group">
           <label>Ảnh thumbnail (tùy chọn)</label>
-          <input type="file" accept="image/*" onChange={onThumb} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <input type="file" accept="image/*" onChange={onThumb} />
+            {form.thumbnail && (
+              <button
+                type="button"
+                className="btn btn-danger btn-sm"
+                onClick={() => setForm((f) => ({ ...f, thumbnail: "" }))}
+                style={{ whiteSpace: "nowrap" }}
+              >
+                Gỡ ảnh
+              </button>
+            )}
+          </div>
           <p className="file-note">Để trống sẽ dùng ảnh YouTube mặc định.</p>
           {form.thumbnail && (
             <img src={form.thumbnail} alt="Thumbnail" className="news-img-preview" style={{ display: "block" }} />
@@ -508,7 +550,19 @@ function AddNewsForm({ data }) {
         </div>
         <div className="form-group">
           <label>Hình ảnh bài viết</label>
-          <input type="file" accept="image/*" onChange={onImage} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <input type="file" accept="image/*" onChange={onImage} />
+            {form.image && (
+              <button
+                type="button"
+                className="btn btn-danger btn-sm"
+                onClick={() => setForm((f) => ({ ...f, image: "" }))}
+                style={{ whiteSpace: "nowrap" }}
+              >
+                Gỡ ảnh
+              </button>
+            )}
+          </div>
           {form.image && (
             <img src={form.image} alt="Preview" className="news-img-preview" style={{ display: "block" }} />
           )}

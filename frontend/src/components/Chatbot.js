@@ -12,7 +12,7 @@ export default function Chatbot() {
     },
   ]);
   const [inputVal, setInputVal] = useState("");
-  const [quickRepliesVisible, setQuickRepliesVisible] = useState(true);
+  const [quickRepliesVisible] = useState(true);
   const messagesEndRef = useRef(null);
 
   const chatbotLogoSrc = images?.chatbotLogo || "/images/chatbot-logo.png";

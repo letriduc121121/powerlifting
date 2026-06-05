@@ -19,6 +19,9 @@ export default function App() {
   // Kích hoạt hiệu ứng xuất hiện cho navbar & hero ngay khi tải xong.
   useEffect(() => {
     document.body.classList.add("loaded");
+    // Mặc định về trang chủ home khi load trang
+    window.scrollTo(0, 0);
+    window.location.hash = "#home";
   }, []);
 
   return (

@@ -3,15 +3,13 @@ import { useApp } from "../context/AppContext";
 import { videoAPI } from "../services/api";
 import Pagination from "./Pagination";
 
-const VIDEOS_PER_PAGE = 6;
-
 // Lưu các video đã xem trong phiên hiện tại (biến bộ nhớ → tự reset khi load lại
 // trang). Mỗi video chỉ tính 1 lượt cho tới khi người dùng tải lại cả trang.
 const viewedVideos = new Set();
 
 export default function Guide() {
   const { state, actions } = useApp();
-  const { isAdmin, images } = state;
+  const { isAdmin } = state;
 
   const [videos, setVideos] = useState([]);
   const [filtered, setFiltered] = useState([]);

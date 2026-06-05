@@ -4,7 +4,6 @@ import { newsAPI } from "../services/api";
 import Pagination from "./Pagination";
 
 const CATEGORIES = ["Tất cả", "THÔNG BÁO", "KẾT QUẢ", "VĐV NỔI BẬT", "HƯỚNG DẪN", "SỰ KIỆN"];
-const NEWS_PER_PAGE = 6;
 
 // Lưu các tin đã xem trong phiên hiện tại (biến bộ nhớ → tự reset khi load lại
 // trang). Mỗi tin chỉ tính 1 lượt cho tới khi người dùng tải lại cả trang.
