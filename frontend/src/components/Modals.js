@@ -33,6 +33,27 @@ function ModalFooter({ children }) {
   return <div className="modal-footer">{children}</div>;
 }
 
+function AlignPicker({ value, onChange }) {
+  return (
+    <div style={{ display: "flex", gap: 4 }}>
+      {[
+        { val: "left",   label: "⬅ Trái"  },
+        { val: "center", label: "↔ Giữa"  },
+        { val: "right",  label: "➡ Phải"  },
+      ].map(({ val, label }) => (
+        <button
+          key={val}
+          type="button"
+          className={`btn btn-xs ${value === val ? "btn-primary" : "btn-outline"}`}
+          onClick={() => onChange(val)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── 1. News Detail Popup ──────────────────────────────────────────────────────
 export function NewsDetailModal() {
   const { state } = useApp();
@@ -203,6 +224,7 @@ function AddEventForm({ data }) {
     name: editItem?.name || "",
     icon: editItem?.icon || "",
     desc: editItem?.desc || "",
+    align: editItem?.align || "left",
   });
 
   const save = async () => {
@@ -228,6 +250,10 @@ function AddEventForm({ data }) {
         <div className="form-group">
           <label>Mô tả chi tiết</label>
           <textarea rows={3} value={form.desc} placeholder="Mô tả kỹ thuật bài thi..." onChange={set("desc")} />
+        </div>
+        <div className="form-group">
+          <label>Căn chỉnh nội dung thẻ</label>
+          <AlignPicker value={form.align} onChange={(v) => setForm({ ...form, align: v })} />
         </div>
       </div>
       <ModalFooter>
@@ -305,7 +331,7 @@ function AddRoadmapForm({ data }) {
               style={{ width: 80 }} onChange={set("weekStart")} />
             <span style={{ color: "var(--text-muted)" }}>đến</span>
             <input type="number" min={1} max={99} placeholder="Đến (Tùy chọn)" value={form.weekEnd}
-              style={{ width: 100 }} onChange={set("weekEnd")} />
+              style={{ width: 150 }} onChange={set("weekEnd")} />
           </div>
           {errors.weekStart && <div style={{ color: "#ea4335", fontSize: "0.85rem", marginTop: 4 }}>{errors.weekStart}</div>}
         </div>
@@ -343,6 +369,7 @@ function AddVideoForm({ data }) {
     url: editItem?.url || "",
     thumbnail: editItem?.thumbnail || "",
     tags: [...(editItem?.tags || [])],
+    pinned: editItem?.pinned || false,
   });
   const [tagInput, setTagInput] = useState("");
   const [errors, setErrors] = useState({});
@@ -359,6 +386,13 @@ function AddVideoForm({ data }) {
       if (!form.tags.includes(tag)) setForm((f) => ({ ...f, tags: [...f.tags, tag] }));
       setTagInput("");
     }
+  };
+
+  const confirmTag = () => {
+    if (!tagInput.trim()) return;
+    const tag = tagInput.trim();
+    if (!form.tags.includes(tag)) setForm((f) => ({ ...f, tags: [...f.tags, tag] }));
+    setTagInput("");
   };
 
   const removeTag = (t) =>
@@ -427,7 +461,7 @@ function AddVideoForm({ data }) {
           )}
         </div>
         <div className="form-group">
-          <label>Tags danh mục (Gõ rồi nhấn Enter)</label>
+          <label>Tags danh mục</label>
           <div className="tags-input-wrap">
             {form.tags.map((t) => (
               <span key={t} style={{
@@ -438,8 +472,24 @@ function AddVideoForm({ data }) {
                 <span style={{ cursor: "pointer" }} onClick={() => removeTag(t)}>✕</span>
               </span>
             ))}
-            <input type="text" value={tagInput} placeholder="Thêm tag..."
-              onChange={(e) => setTagInput(e.target.value)} onKeyDown={addTag} />
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+            <input
+              type="text"
+              value={tagInput}
+              placeholder="Thêm tag..."
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={addTag}
+              style={{ flex: 1, minWidth: 0 }}
+            />
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={confirmTag}
+              style={{ whiteSpace: "nowrap" }}
+            >
+              + Thêm
+            </button>
           </div>
           {existingTags.filter(t => !form.tags.includes(t)).length > 0 && (
             <div style={{ marginTop: 8 }}>
@@ -454,6 +504,18 @@ function AddVideoForm({ data }) {
               ))}
             </div>
           )}
+        </div>
+        <div className="form-group" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <input
+            type="checkbox"
+            id="video-pinned-checkbox"
+            checked={form.pinned}
+            onChange={(e) => setForm((f) => ({ ...f, pinned: e.target.checked }))}
+            style={{ width: 18, height: 18, cursor: "pointer", accentColor: "var(--blue)", flexShrink: 0 }}
+          />
+          <label htmlFor="video-pinned-checkbox" style={{ margin: 0, cursor: "pointer", fontWeight: 500 }}>
+            📌 Ghim video lên đầu danh sách
+          </label>
         </div>
       </div>
       <ModalFooter>
@@ -600,13 +662,26 @@ function PrizesForm({ data }) {
   const { actions } = useApp();
   const { prizes, onSaved } = data;
   const [form, setForm] = useState({
-    gold: { ...prizes?.gold },
-    silver: { ...prizes?.silver },
-    bronze: { ...prizes?.bronze },
+    gold:   { image: "", align: "center", ...prizes?.gold   },
+    silver: { image: "", align: "center", ...prizes?.silver },
+    bronze: { image: "", align: "center", ...prizes?.bronze },
   });
 
   const set = (tier, field) => (e) =>
     setForm((f) => ({ ...f, [tier]: { ...f[tier], [field]: e.target.value } }));
+
+  const onPrizeImage = (key) => async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const dataUrl = await resizeImage(file, { maxDim: 400, format: "jpeg" });
+      setForm((f) => ({ ...f, [key]: { ...f[key], image: dataUrl } }));
+    } catch (err) {
+      alert("Không xử lý được ảnh: " + err.message);
+    } finally {
+      e.target.value = "";
+    }
+  };
 
   const save = async () => {
     await prizeAPI.update(form);
@@ -617,21 +692,63 @@ function PrizesForm({ data }) {
   return (
     <ModalShell name="prizes" title="Chỉnh Sửa Giải Thưởng" maxWidth={450}>
       <div className="modal-body">
-        {PRIZE_TIERS.map(({ key, emoji, label }) => (
-          <div key={key}>
-            <h4 className="modal-sub-title">{emoji} {label}</h4>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Số tiền</label>
-                <input type="text" value={form[key].amount || ""} onChange={set(key, "amount")} />
+        {PRIZE_TIERS.map(({ key, emoji, label }) => {
+          const isImgUrl = form[key].image && (
+            form[key].image.startsWith("http") ||
+            form[key].image.startsWith("/") ||
+            form[key].image.startsWith("data:")
+          );
+          return (
+            <div key={key} style={{ borderBottom: "1px solid var(--border)", paddingBottom: 14, marginBottom: 14 }}>
+              <h4 className="modal-sub-title">{emoji} {label}</h4>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Số tiền</label>
+                  <input type="text" value={form[key].amount || ""} onChange={set(key, "amount")} />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Mô tả phụ</label>
+                  <input type="text" value={form[key].desc || ""} onChange={set(key, "desc")} />
+                </div>
               </div>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Mô tả phụ</label>
-                <input type="text" value={form[key].desc || ""} onChange={set(key, "desc")} />
+              <div className="form-group" style={{ marginBottom: 8 }}>
+                <label>Ảnh / Emoji (tùy chọn)</label>
+                <input
+                  type="text"
+                  value={form[key].image || ""}
+                  placeholder="URL ảnh hoặc emoji (vd: 🏆)"
+                  onChange={(e) => setForm(f => ({ ...f, [key]: { ...f[key], image: e.target.value } }))}
+                  style={{ marginBottom: 6 }}
+                />
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input type="file" accept="image/*" onChange={onPrizeImage(key)} />
+                  {form[key].image && (
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-xs"
+                      style={{ whiteSpace: "nowrap" }}
+                      onClick={() => setForm(f => ({ ...f, [key]: { ...f[key], image: "" } }))}
+                    >
+                      Xóa ảnh
+                    </button>
+                  )}
+                </div>
+                {form[key].image && (
+                  isImgUrl
+                    ? <img src={form[key].image} alt="" style={{ maxHeight: 60, objectFit: "contain", marginTop: 6, borderRadius: 4, display: "block" }} />
+                    : <span style={{ fontSize: "2rem", display: "block", marginTop: 4 }}>{form[key].image}</span>
+                )}
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Căn chỉnh nội dung thẻ</label>
+                <AlignPicker
+                  value={form[key].align || "center"}
+                  onChange={(v) => setForm(f => ({ ...f, [key]: { ...f[key], align: v } }))}
+                />
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <ModalFooter>
         <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
@@ -800,6 +917,117 @@ export function ImageConfigModal() {
   );
 }
 
+// ─── 12. Edit Base Info Card Modal ────────────────────────────────────────────
+export function EditInfoCardModal() {
+  const { state } = useApp();
+  if (state.modal !== "editInfoCard") return null;
+  return <EditInfoCardForm data={state.modalData || {}} />;
+}
+
+function EditInfoCardForm({ data }) {
+  const { state, actions } = useApp();
+  const { def } = data;
+  const { config } = state;
+
+  const [primary,  setPrimary]  = useState(config[def.primaryKey]  || "");
+  const [subtitle, setSubtitle] = useState(config[def.subtitleKey] || "");
+  const [align,    setAlign]    = useState(config[def.alignKey]    || "center");
+
+  const save = async () => {
+    await actions.updateConfig(def.primaryKey,  primary);
+    await actions.updateConfig(def.subtitleKey, subtitle);
+    await actions.updateConfig(def.alignKey,    align);
+    actions.closeModal();
+  };
+
+  return (
+    <ModalShell name="editInfoCard" title={`Chỉnh Sửa: ${def.title}`} maxWidth={400}>
+      <div className="modal-body">
+        <div className="form-group">
+          <label>{def.primaryLabel}</label>
+          <input type="text" value={primary} onChange={(e) => setPrimary(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>{def.subtitleLabel}</label>
+          <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Căn chỉnh nội dung thẻ</label>
+          <AlignPicker value={align} onChange={setAlign} />
+        </div>
+      </div>
+      <ModalFooter>
+        <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
+        <button className="btn btn-primary" onClick={save}>Lưu</button>
+      </ModalFooter>
+    </ModalShell>
+  );
+}
+
+// ─── 13. Add / Edit Extra Info Card Modal ─────────────────────────────────────
+export function EditExtraInfoCardModal() {
+  const { state } = useApp();
+  if (state.modal !== "editExtraInfoCard") return null;
+  return <EditExtraInfoCardForm data={state.modalData || {}} />;
+}
+
+function EditExtraInfoCardForm({ data }) {
+  const { actions } = useApp();
+  const { card, onSaved } = data;
+  const isEdit = !!card;
+
+  const [form, setForm] = useState({
+    id:       card?.id       || `extra_${Date.now()}`,
+    icon:     card?.icon     || "📋",
+    title:    card?.title    || "",
+    primary:  card?.primary  || "",
+    subtitle: card?.subtitle || "",
+    align:    card?.align    || "center",
+  });
+
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const save = () => {
+    onSaved?.(form);
+    actions.closeModal();
+  };
+
+  return (
+    <ModalShell
+      name="editExtraInfoCard"
+      title={isEdit ? "Chỉnh Sửa Thông Tin" : "Thêm Thông Tin Mới"}
+      maxWidth={400}
+    >
+      <div className="modal-body">
+        <div className="form-group">
+          <label>Biểu tượng (emoji)</label>
+          <input type="text" value={form.icon} placeholder="Ví dụ: 📋 💰 ⏰" onChange={set("icon")} />
+        </div>
+        <div className="form-group">
+          <label>Tiêu đề thẻ</label>
+          <input type="text" value={form.title} placeholder="Ví dụ: Phí tham dự" onChange={set("title")} />
+        </div>
+        <div className="form-group">
+          <label>Nội dung chính</label>
+          <input type="text" value={form.primary} placeholder="Nội dung..." onChange={set("primary")} />
+        </div>
+        <div className="form-group">
+          <label>Nội dung phụ (tùy chọn)</label>
+          <input type="text" value={form.subtitle} placeholder="Nội dung phụ..." onChange={set("subtitle")} />
+        </div>
+        <div className="form-group">
+          <label>Căn chỉnh nội dung thẻ</label>
+          <AlignPicker value={form.align} onChange={(v) => setForm((f) => ({ ...f, align: v }))} />
+        </div>
+      </div>
+      <ModalFooter>
+        <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
+        <button className="btn btn-primary" onClick={save}>{isEdit ? "Lưu" : "Thêm"}</button>
+      </ModalFooter>
+    </ModalShell>
+  );
+}
+
 // ─── Root Modals Bundle ────────────────────────────────────────────────────────
 export default function Modals() {
   return (
@@ -815,6 +1043,8 @@ export default function Modals() {
       <RegLinkModal />
       <VideoViewerModal />
       <ImageConfigModal />
+      <EditInfoCardModal />
+      <EditExtraInfoCardModal />
     </>
   );
 }
