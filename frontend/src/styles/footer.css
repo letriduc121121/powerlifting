@@ -147,3 +147,31 @@
   height: 150px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* Admin tùy biến footer: nút bút chì nằm inline ngay sau nội dung
+   (tránh bị tràn/cắt trong các cột footer). */
+.footer .field-wrap {
+  position: relative;
+}
+
+.footer .editable-field {
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.18);
+}
+
+body.admin-logged .footer .editable-field {
+  cursor: pointer;
+  border-color: rgba(255, 214, 0, 0.6);
+}
+
+body.admin-logged .footer .editable-field:hover {
+  color: var(--yellow);
+  border-color: var(--yellow);
+}
+
+.footer .field-edit-icon {
+  position: relative !important;
+  top: 0 !important;
+  right: auto !important;
+  margin-left: 6px;
+  vertical-align: middle;
+}

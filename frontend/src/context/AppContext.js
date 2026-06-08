@@ -10,6 +10,11 @@ const initialState = {
 
   // Config fields (editable content)
   config: {
+    heroEyebrow: "Giải Đấu Chính Thức 2026",
+    heroTitleTop: "POWER",
+    heroTitleMid: "LIFTING",
+    heroTitleBottom: "2026",
+    heroSubtitle: "Nơi những người mạnh nhất tranh tài",
     heroDate: "20/08/2026 – 21/08/2026",
     heroLocation: "Thành phố Hà Nội",
     introTitle: "Powerlifting Là Gì?",
@@ -23,8 +28,20 @@ const initialState = {
     infoTargetSub: "Từ 16 tuổi trở lên",
     regLink: "#",
     statAthletes: "200+",
+    statAthletesLabel: "VĐV đăng ký",
     statClasses: "12",
+    statClassesLabel: "Hạng Cân",
     statEvents: "3",
+    statEventsLabel: "Nội Dung Thi",
+    // Footer
+    footerSlogan:
+      "Giải Powerlifting chính thức tại Hà Nội, Việt Nam. Nơi những người mạnh nhất tranh tài.",
+    contactEmail: "plchampionship2026@gmail.com",
+    contactPhone: "0901 234 567",
+    contactAddress: "Hà Nội, Việt Nam",
+    mapLat: 21.0127,
+    mapLng: 105.5259,
+    mapEmbedUrl: "https://maps.google.com/maps?q=21.0127,105.5259&z=16&output=embed",
   },
 
   // Images config
@@ -124,6 +141,12 @@ export function AppProvider({ children }) {
     updateConfig: async (key, value) => {
       dispatch({ type: "SET_CONFIG", payload: { [key]: value } });
       await configAPI.update(key, value);
+    },
+
+    // Lưu nhiều field config cùng lúc (vd: chọn vị trí map → lat + lng + embedUrl)
+    updateConfigMany: async (fields) => {
+      dispatch({ type: "SET_CONFIG", payload: fields });
+      await configAPI.updateMany(fields);
     },
 
     updateImages: async (key, value) => {

@@ -137,6 +137,16 @@ body.admin-logged .hero-meta-item .editable-field:hover {
   box-shadow: var(--shadow);
 }
 
+/* Các vùng admin tùy biến trong hero (eyebrow, tiêu đề, slogan, số liệu):
+   field-wrap cần position:relative để neo nút bút chì (position:absolute). */
+.hero-eyebrow.field-wrap,
+.hero-title .field-wrap,
+.hero-subtitle.field-wrap,
+.stat-box .field-wrap {
+  position: relative;
+  display: inline-block;
+}
+
 .hero-actions {
   display: flex;
   gap: 16px;

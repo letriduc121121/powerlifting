@@ -344,11 +344,16 @@
 .ndp-img {
   width: 100%;
   aspect-ratio: 16/9;
-  background: linear-gradient(135deg, #1a73e8 0%, #1558b0 100%);
+  background-color: #1558b0;
+  background-image: linear-gradient(135deg, #1a73e8 0%, #1558b0 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .ndp-img img {

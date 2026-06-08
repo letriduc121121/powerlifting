@@ -89,6 +89,12 @@ const CONFIG_FIELDS = [
   "heroDate", "heroLocation", "infoTimeSub", "infoLocationSub", "infoWeightClass",
   "infoWeightClassSub", "infoTarget", "infoTargetSub", "regLink", "introTitle",
   "introDesc", "statAthletes", "statClasses", "statEvents",
+  // Hero (tùy biến): eyebrow, tiêu đề 3 dòng, slogan, nhãn số liệu
+  "heroEyebrow", "heroTitleTop", "heroTitleMid", "heroTitleBottom", "heroSubtitle",
+  "statAthletesLabel", "statClassesLabel", "statEventsLabel",
+  // Footer (tùy biến): khẩu hiệu, liên hệ, bản đồ
+  "footerSlogan", "contactEmail", "contactPhone", "contactAddress",
+  "mapLat", "mapLng", "mapEmbedUrl",
 ];
 export const configAPI = {
   getAll: async () => {
@@ -100,6 +106,7 @@ export const configAPI = {
     return { data: { config, images: d.images || {} } };
   },
   update: (key, value) => patchAppData({ [key]: value }),
+  updateMany: (fields) => patchAppData(fields),
 };
 
 export const imageAPI = {

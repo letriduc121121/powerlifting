@@ -1,6 +1,8 @@
-// backend/seeds/seedBulk.js — Thêm 30 video + 30 tin tức (kèm lượt xem) để test hiệu năng tải dữ liệu
-// Cách chạy:  node seeds/seedBulk.js          (thêm tiếp nối ID hiện có)
-//             node seeds/seedBulk.js --reset  (xoá hết video/news rồi seed lại từ đầu)
+// backend/seeds/seedBulk.js — Sinh dữ liệu mẫu cho TẤT CẢ các mục
+//  • 20 video + 20 tin tức (kèm lượt xem) để test hiệu năng tải dữ liệu
+//  • Với --reset: reset luôn AppData (config Hero/Footer, sự kiện, lộ trình, giải thưởng) về dữ liệu mẫu
+// Cách chạy:  node seeds/seedBulk.js          (thêm video/news tiếp nối ID hiện có)
+//             node seeds/seedBulk.js --reset  (xoá & seed lại toàn bộ từ đầu)
 
 require('dotenv').config();
 const mongoose = require('mongoose');
@@ -8,9 +10,12 @@ const mongoose = require('mongoose');
 const connectDB = require('../config/db');
 const Video = require('../models/Video');
 const News  = require('../models/News');
+const AppData = require('../models/AppData');
+const { defaults } = require('./seedData'); // dữ liệu mẫu chung (config, events, roadmaps, prizes)
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/powerlifting';
 const RESET = process.argv.includes('--reset');
+const COUNT = 20; // số lượng video / tin tức cần sinh
 
 // ── Nguồn dữ liệu mẫu để sinh nội dung đa dạng ────────────────────────────────
 const sampleEmbeds = [
@@ -69,13 +74,21 @@ async function run() {
     await Video.deleteMany({});
     await News.deleteMany({});
     console.log('Đã xoá toàn bộ video & news cũ (--reset).');
+
+    // Reset AppData về dữ liệu mẫu: config Hero/Footer, sự kiện, lộ trình, giải thưởng, ảnh…
+    await AppData.findOneAndUpdate(
+      { key: 'main' },
+      { $set: { key: 'main', ...defaults } },
+      { upsert: true, new: true }
+    );
+    console.log('Đã reset AppData (config, sự kiện, lộ trình, giải thưởng, bản đồ) về dữ liệu mẫu.');
   }
 
   // ── Videos ──────────────────────────────────────────────────────────────────
   const maxVideo = await Video.findOne().sort({ id: -1 });
   let vid = maxVideo ? maxVideo.id : 0;
   const videos = [];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < COUNT; i++) {
     vid++;
     const topic = videoTopics[i % videoTopics.length];
     videos.push({
@@ -89,13 +102,13 @@ async function run() {
     });
   }
   await Video.insertMany(videos);
-  console.log(`Đã thêm 30 video (id ${videos[0].id}–${videos[29].id}).`);
+  console.log(`Đã thêm ${videos.length} video (id ${videos[0].id}–${videos[videos.length - 1].id}).`);
 
   // ── News ────────────────────────────────────────────────────────────────────
   const maxNews = await News.findOne().sort({ id: -1 });
   let nid = maxNews ? maxNews.id : 0;
   const news = [];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < COUNT; i++) {
     nid++;
     const title = newsTitles[i % newsTitles.length];
     const cat = newsCats[i % newsCats.length];
@@ -112,7 +125,7 @@ async function run() {
     });
   }
   await News.insertMany(news);
-  console.log(`Đã thêm 30 tin tức (id ${news[0].id}–${news[29].id}).`);
+  console.log(`Đã thêm ${news.length} tin tức (id ${news[0].id}–${news[news.length - 1].id}).`);
 
   const totalV = await Video.countDocuments();
   const totalN = await News.countDocuments();

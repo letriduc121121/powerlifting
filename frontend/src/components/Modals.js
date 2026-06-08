@@ -1,8 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useApp } from "../context/AppContext";
 import { eventAPI, roadmapAPI, videoAPI, newsAPI, prizeAPI } from "../services/api";
 import { resizeImage } from "../utils/resizeImage";
 import { Eye, EyeOff } from "lucide-react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Leaflet: marker icon mặc định lỗi đường dẫn khi bundle qua webpack → dùng CDN.
+const MAP_ICON = L.icon({
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 // Thêm class `.open` ngay sau khi mount để kích hoạt hiệu ứng fade/scale vào.
 function useOpenTransition() {
@@ -1028,6 +1041,144 @@ function EditExtraInfoCardForm({ data }) {
   );
 }
 
+// ─── Map Location Picker Modal ───────────────────────────────────────────────────
+// Admin chọn vị trí ghim bản đồ footer: tìm theo tên địa điểm hoặc bấm/kéo ghim
+// trực tiếp trên bản đồ (Leaflet + OpenStreetMap, miễn phí, không cần API key).
+export function MapPickerModal() {
+  const { state } = useApp();
+  if (state.modal !== "mapPicker") return null;
+  return <MapPickerForm />;
+}
+
+function MapPickerForm() {
+  const { state, actions } = useApp();
+  const { config } = state;
+
+  const mapEl = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+
+  const [pos, setPos] = useState({
+    lat: Number(config.mapLat) || 21.0127,
+    lng: Number(config.mapLng) || 105.5259,
+  });
+  const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Khởi tạo bản đồ Leaflet 1 lần khi mount.
+  useEffect(() => {
+    if (mapRef.current || !mapEl.current) return;
+    const start = [
+      Number(config.mapLat) || 21.0127,
+      Number(config.mapLng) || 105.5259,
+    ];
+    const map = L.map(mapEl.current).setView(start, 16);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap",
+      maxZoom: 19,
+    }).addTo(map);
+
+    const marker = L.marker(start, { draggable: true, icon: MAP_ICON }).addTo(map);
+    marker.on("dragend", () => {
+      const ll = marker.getLatLng();
+      setPos({ lat: ll.lat, lng: ll.lng });
+    });
+    map.on("click", (e) => {
+      marker.setLatLng(e.latlng);
+      setPos({ lat: e.latlng.lat, lng: e.latlng.lng });
+    });
+
+    mapRef.current = map;
+    markerRef.current = marker;
+    // Modal có hiệu ứng scale khi mở → tính lại kích thước sau khi animation xong.
+    const t = setTimeout(() => map.invalidateSize(), 350);
+    return () => {
+      clearTimeout(t);
+      map.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const search = async (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    setSearching(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`
+      );
+      const data = await res.json();
+      if (data && data[0]) {
+        const lat = Number(data[0].lat);
+        const lng = Number(data[0].lon);
+        setPos({ lat, lng });
+        if (mapRef.current && markerRef.current) {
+          mapRef.current.setView([lat, lng], 16);
+          markerRef.current.setLatLng([lat, lng]);
+        }
+      } else {
+        alert("Không tìm thấy địa điểm. Hãy thử từ khoá khác.");
+      }
+    } catch (_) {
+      alert("Lỗi tìm kiếm địa điểm. Vui lòng thử lại.");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const lat = Number(pos.lat.toFixed(6));
+    const lng = Number(pos.lng.toFixed(6));
+    const mapEmbedUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+    try {
+      await actions.updateConfigMany({ mapLat: lat, mapLng: lng, mapEmbedUrl });
+      actions.closeModal();
+    } catch (_) {
+      alert("Lưu vị trí thất bại. Vui lòng thử lại.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <ModalShell name="mapPicker" title="Chọn vị trí ghim bản đồ" maxWidth={640}>
+      <div className="modal-body">
+        <form onSubmit={search} style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <input
+            type="text"
+            placeholder="Tìm địa điểm (vd: Đại học FPT Hòa Lạc)…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <button type="submit" className="btn btn-outline" disabled={searching}>
+            {searching ? "Đang tìm…" : "Tìm"}
+          </button>
+        </form>
+        <div
+          ref={mapEl}
+          className="map-picker"
+          style={{ height: 360, width: "100%", borderRadius: 8, overflow: "hidden" }}
+        />
+        <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginTop: 8 }}>
+          Bấm lên bản đồ hoặc kéo ghim 📍 để chọn vị trí. Toạ độ:{" "}
+          {pos.lat.toFixed(5)}, {pos.lng.toFixed(5)}
+        </p>
+      </div>
+      <ModalFooter>
+        <button className="btn btn-ghost-sm" onClick={() => actions.closeModal()}>Hủy</button>
+        <button className="btn btn-primary" onClick={save} disabled={saving}>
+          {saving ? "Đang lưu…" : "Lưu vị trí"}
+        </button>
+      </ModalFooter>
+    </ModalShell>
+  );
+}
+
 // ─── Root Modals Bundle ────────────────────────────────────────────────────────
 export default function Modals() {
   return (
@@ -1045,6 +1196,7 @@ export default function Modals() {
       <ImageConfigModal />
       <EditInfoCardModal />
       <EditExtraInfoCardModal />
+      <MapPickerModal />
     </>
   );
 }

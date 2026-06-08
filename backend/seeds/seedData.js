@@ -6,8 +6,26 @@ const News    = require('../models/News');
 
 // ── Default seed values ───────────────────────────────────────────────────────
 const defaults = {
+  heroEyebrow:     'Giải Đấu Chính Thức 2026',
+  heroTitleTop:    'POWER',
+  heroTitleMid:    'LIFTING',
+  heroTitleBottom: '2026',
+  heroSubtitle:    'Nơi những người mạnh nhất tranh tài',
   heroDate:        '20/08/2026 – 21/08/2026',
   heroLocation:    'Thành phố Hà Nội',
+  statAthletes:      '200+',
+  statAthletesLabel: 'VĐV đăng ký',
+  statClasses:       '12',
+  statClassesLabel:  'Hạng Cân',
+  statEvents:        '3',
+  statEventsLabel:   'Nội Dung Thi',
+  footerSlogan:   'Giải Powerlifting chính thức tại Hà Nội, Việt Nam. Nơi những người mạnh nhất tranh tài.',
+  contactEmail:   'plchampionship2026@gmail.com',
+  contactPhone:   '0901 234 567',
+  contactAddress: 'Hà Nội, Việt Nam',
+  mapLat: 21.0127,
+  mapLng: 105.5259,
+  mapEmbedUrl:    'https://maps.google.com/maps?q=21.0127,105.5259&z=16&output=embed',
   infoTimeSub:     '07:00 – 18:00',
   infoLocationSub: 'Nhà thi đấu tỉnh',
   infoWeightClass:    'Nam: 59, 66, 74, 83, 93, 105, 120, +120kg',
@@ -124,6 +142,29 @@ module.exports = async function seedData() {
         updates['images.heroBg'] = '/images/hero-bg-v2.png';
         console.log('Migrated: hero background → v2.');
       }
+      if (appData.heroEyebrow === undefined) {
+        Object.assign(updates, {
+          heroEyebrow: defaults.heroEyebrow,
+          heroTitleTop: defaults.heroTitleTop,
+          heroTitleMid: defaults.heroTitleMid,
+          heroTitleBottom: defaults.heroTitleBottom,
+          heroSubtitle: defaults.heroSubtitle,
+          statAthletes: defaults.statAthletes,
+          statAthletesLabel: defaults.statAthletesLabel,
+          statClasses: defaults.statClasses,
+          statClassesLabel: defaults.statClassesLabel,
+          statEvents: defaults.statEvents,
+          statEventsLabel: defaults.statEventsLabel,
+          footerSlogan: defaults.footerSlogan,
+          contactEmail: defaults.contactEmail,
+          contactPhone: defaults.contactPhone,
+          contactAddress: defaults.contactAddress,
+          mapLat: defaults.mapLat,
+          mapLng: defaults.mapLng,
+          mapEmbedUrl: defaults.mapEmbedUrl,
+        });
+        console.log('Migrated: hero/footer customizable fields.');
+      }
       if (!appData.beginnerRoadmap || appData.beginnerRoadmap.length === 0) {
         updates.beginnerRoadmap = defaults.beginnerRoadmap;
         console.log('Migrated: beginnerRoadmap initialized with defaults.');
@@ -163,3 +204,8 @@ module.exports = async function seedData() {
     console.error('seedData error:', err.message);
   }
 };
+
+// Export dữ liệu mẫu để các script khác (vd seedBulk --reset) dùng lại.
+module.exports.defaults = defaults;
+module.exports.defaultVideos = defaultVideos;
+module.exports.defaultNews = defaultNews;

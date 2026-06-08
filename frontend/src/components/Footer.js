@@ -13,13 +13,36 @@ const NAV_LINKS = [
 
 export default function Footer() {
   const { state, actions } = useApp();
-  const { images, isAdmin } = state;
+  const { images, isAdmin, config } = state;
+
+  const openEdit = (key, title, isTextarea = false) => {
+    if (!isAdmin) return;
+    actions.openModal("editField", { key, title, value: config[key], isTextarea });
+  };
+
+  const Pencil = ({ field, title, textarea }) =>
+    isAdmin ? (
+      <button
+        className="field-edit-icon"
+        onClick={() => openEdit(field, title, textarea)}
+        title={title}
+      >
+        ✏️
+      </button>
+    ) : null;
 
   const handleNavClick = (e, href) => {
     e.preventDefault();
     const el = document.querySelector(href);
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
+
+  // Admin có thể dán nguyên thẻ <iframe ... src="..."> hoặc chỉ URL → tự trích src.
+  const mapSrc = (() => {
+    const v = config.mapEmbedUrl || "";
+    const m = v.match(/src=["']([^"']+)["']/i);
+    return m ? m[1] : v;
+  })();
 
   return (
     <footer className="footer">
@@ -37,8 +60,9 @@ export default function Footer() {
                 style={{ height: "100%", objectFit: "contain" }}
               />
             </div>
-            <p style={{ fontSize: "0.88rem", lineHeight: 1.7, margin: "0 0 16px 0" }}>
-              Giải Powerlifting chính thức tại Hà Nội, Việt Nam. Nơi những người mạnh nhất tranh tài.
+            <p className="field-wrap" style={{ fontSize: "0.88rem", lineHeight: 1.7, margin: "0 0 16px 0" }}>
+              <span className="editable-field">{config.footerSlogan}</span>
+              <Pencil field="footerSlogan" title="Chỉnh sửa Khẩu hiệu" textarea />
             </p>
             <div className="social-links">
               <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" title="Facebook">📘</a>
@@ -50,17 +74,20 @@ export default function Footer() {
           {/* Contact */}
           <div className="footer-contact">
             <h4>Liên Hệ</h4>
-            <p>
+            <p className="field-wrap">
               <Mail className="w-4 h-4 inline-block align-middle mr-1" style={{ color: "#9ca3af" }} />
-              plchampionship2026@gmail.com
+              <span className="editable-field">{config.contactEmail}</span>
+              <Pencil field="contactEmail" title="Chỉnh sửa Email" />
             </p>
-            <p>
+            <p className="field-wrap">
               <Phone className="w-4 h-4 inline-block align-middle mr-1" style={{ color: "#9ca3af" }} />
-              0901 234 567
+              <span className="editable-field">{config.contactPhone}</span>
+              <Pencil field="contactPhone" title="Chỉnh sửa Số điện thoại" />
             </p>
-            <p>
+            <p className="field-wrap">
               <MapPin className="w-4 h-4 inline-block align-middle mr-1" style={{ color: "#9ca3af" }} />
-              Hà Nội, Việt Nam
+              <span className="editable-field">{config.contactAddress}</span>
+              <Pencil field="contactAddress" title="Chỉnh sửa Địa chỉ" />
             </p>
           </div>
 
@@ -82,11 +109,22 @@ export default function Footer() {
 
           {/* Map */}
           <div className="footer-map-col">
-            <h4>Bản Đồ Địa Chỉ</h4>
+            <h4 className="field-wrap">
+              Bản Đồ Địa Chỉ
+              {isAdmin && (
+                <button
+                  className="field-edit-icon"
+                  onClick={() => actions.openModal("mapPicker")}
+                  title="Chọn vị trí ghim bản đồ"
+                >
+                  📍
+                </button>
+              )}
+            </h4>
             <div className="footer-map-container">
               <iframe
-                title="Hanoi Map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.097073747585!2d105.80164807597149!3d21.02880148810793!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab424a50fff9%3A0xbe22efcead54002b!2zVHJ1bmcgdMOibSBUaMO0bmcgVMOtbiBRdeG7kWMgdOG6vyBIw6AgTuG7mWk!5e0!3m2!1svi!2svn!4v1717140000000!5m2!1svi!2svn"
+                title="Bản đồ địa điểm"
+                src={mapSrc}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
