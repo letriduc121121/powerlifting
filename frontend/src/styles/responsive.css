@@ -81,13 +81,13 @@
     top: 72px;
     left: 0;
     right: 0;
-    background: rgba(24, 74, 140, 0.97) !important;
+    background: rgba(255, 255, 255, 0.97) !important;
     backdrop-filter: blur(24px) !important;
     -webkit-backdrop-filter: blur(24px) !important;
     flex-direction: column;
     padding: 24px 16px !important;
     gap: 8px !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-bottom: 1px solid rgba(15, 40, 80, 0.1) !important;
     box-shadow: var(--shadow-lg) !important;
     max-height: calc(100vh - 72px);
     overflow-y: auto;

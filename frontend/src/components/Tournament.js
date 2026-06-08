@@ -23,6 +23,37 @@ const DEFAULT_TOURNAMENT_ROADMAP = [
   { id: 5, weekStart: 8, weekEnd: 8, title: "DELOAD & THI ĐẤU", content: "Tập nhẹ 2–3 ngày đầu, dừng 2–3 ngày trước thi. Ngủ đủ, cân nước hợp lý." },
 ];
 
+const ICON_COMPS = { Calendar, MapPin, Scale, Users };
+
+const INFO_CARD_DEFS = [
+  {
+    id: "time", icon: "Calendar", title: "Thời Gian",
+    primaryKey: "heroDate", primaryLabel: "Ngày thi đấu", primaryStyle: {},
+    subtitleKey: "infoTimeSub", subtitleLabel: "Giờ thi đấu", subtitleStyle: {},
+    alignKey: "alignCardTime", hideKey: "hideCardTime",
+  },
+  {
+    id: "location", icon: "MapPin", title: "Địa Điểm",
+    primaryKey: "heroLocation", primaryLabel: "Địa điểm", primaryStyle: {},
+    subtitleKey: "infoLocationSub", subtitleLabel: "Tên nhà thi đấu", subtitleStyle: {},
+    alignKey: "alignCardLocation", hideKey: "hideCardLocation",
+  },
+  {
+    id: "weight", icon: "Scale", title: "Hạng Cân",
+    primaryKey: "infoWeightClass", primaryLabel: "Hạng cân Nam",
+    primaryStyle: { fontSize: "1.05rem", lineHeight: 1.5 },
+    subtitleKey: "infoWeightClassSub", subtitleLabel: "Hạng cân Nữ",
+    subtitleStyle: { fontSize: "0.85rem", lineHeight: 1.5, marginTop: 6 },
+    alignKey: "alignCardWeight", hideKey: "hideCardWeight",
+  },
+  {
+    id: "target", icon: "Users", title: "Đối Tượng",
+    primaryKey: "infoTarget", primaryLabel: "Đối tượng tham gia", primaryStyle: {},
+    subtitleKey: "infoTargetSub", subtitleLabel: "Độ tuổi quy định", subtitleStyle: {},
+    alignKey: "alignCardTarget", hideKey: "hideCardTarget",
+  },
+];
+
 export default function Tournament() {
   const { state, actions } = useApp();
   const { isAdmin, config } = state;
@@ -56,19 +87,14 @@ export default function Tournament() {
       .catch(() => {});
   }, []);
 
-  const openEdit = (key, title, isTextarea = false) => {
-    if (!isAdmin) return;
-    actions.openModal("editField", { key, title, value: config[key], isTextarea });
-  };
+//   const openEdit = (key, title, isTextarea = false) => {
+//     if (!isAdmin) return;
+//     actions.openModal("editField", { key, title, value: config[key], isTextarea });
+//   };
 
-  const EditableField = ({ configKey, title, tag: Tag = "span", style, isTextarea }) => (
-    <span className="field-wrap" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-      <Tag className="editable-field" style={style}>{config[configKey]}</Tag>
-      {isAdmin && (
-        <button className="field-edit-icon" onClick={() => openEdit(configKey, title, isTextarea)}>✏️</button>
-      )}
-    </span>
-  );
+  const extraInfoCards = (() => {
+    try { return JSON.parse(config.extraInfoCards || "[]"); } catch { return []; }
+  })();
 
   return (
     <section id="giai-dau" className="tournament-section">
@@ -79,38 +105,106 @@ export default function Tournament() {
 
         {/* Info Cards */}
         <div className="info-grid reveal">
-          <div className="info-card">
-            <div className="ic-icon"><Calendar className="w-8 h-8" style={{ color: "var(--blue)" }} /></div>
-            <h3>Thời Gian</h3>
-            <p><EditableField configKey="heroDate" title="Chỉnh sửa Ngày Giải Đấu" /></p>
-            <small><EditableField configKey="infoTimeSub" title="Chỉnh sửa Giờ thi đấu" /></small>
-          </div>
+          {INFO_CARD_DEFS.map((def) => {
+            if (config[def.hideKey] === "1") return null;
+            const IconComp = ICON_COMPS[def.icon];
+            const alignment = config[def.alignKey] || "center";
+            return (
+              <div
+                key={def.id}
+                className="info-card"
+                style={{ display: "flex", flexDirection: "column", textAlign: alignment }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div className="ic-icon">
+                    <IconComp className="w-8 h-8" style={{ color: "var(--blue)" }} />
+                  </div>
+                  <h3>{def.title}</h3>
+                  <p style={def.primaryStyle}>{config[def.primaryKey]}</p>
+                  <small style={{ display: "block", ...def.subtitleStyle }}>{config[def.subtitleKey]}</small>
+                </div>
+                {isAdmin && (
+                  <div className="admin-card-actions" style={{ justifyContent: "center", marginTop: 10 }}>
+                    <button
+                      className="btn btn-outline btn-xs"
+                      onClick={() => actions.openModal("editInfoCard", { def, config })}
+                    >
+                      ✏️ Sửa
+                    </button>
+                    <button
+                      className="btn btn-danger btn-xs"
+                      onClick={() => window.confirm("Ẩn thẻ này?") && actions.updateConfig(def.hideKey, "1")}
+                    >
+                      🗑️ Xóa
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-          <div className="info-card">
-            <div className="ic-icon"><MapPin className="w-8 h-8" style={{ color: "var(--blue)" }} /></div>
-            <h3>Địa Điểm</h3>
-            <p><EditableField configKey="heroLocation" title="Chỉnh sửa Địa điểm" /></p>
-            <small><EditableField configKey="infoLocationSub" title="Chỉnh sửa Tên nhà thi đấu" /></small>
-          </div>
-
-          <div className="info-card">
-            <div className="ic-icon"><Scale className="w-8 h-8" style={{ color: "var(--blue)" }} /></div>
-            <h3>Hạng Cân</h3>
-            <p style={{ fontSize: "1.05rem", lineHeight: 1.5 }}>
-              <EditableField configKey="infoWeightClass" title="Chỉnh sửa Hạng cân Nam" />
-            </p>
-            <small style={{ fontSize: "0.85rem", lineHeight: 1.5, marginTop: 6, display: "block" }}>
-              <EditableField configKey="infoWeightClassSub" title="Chỉnh sửa Hạng cân Nữ" />
-            </small>
-          </div>
-
-          <div className="info-card">
-            <div className="ic-icon"><Users className="w-8 h-8" style={{ color: "var(--blue)" }} /></div>
-            <h3>Đối Tượng</h3>
-            <p><EditableField configKey="infoTarget" title="Chỉnh sửa Đối tượng tham gia" /></p>
-            <small><EditableField configKey="infoTargetSub" title="Chỉnh sửa Độ tuổi quy định" /></small>
-          </div>
+          {extraInfoCards.map((card) => {
+            const alignment = card.align || "center";
+            return (
+              <div
+                key={card.id}
+                className="info-card"
+                style={{ display: "flex", flexDirection: "column", textAlign: alignment }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div className="ic-icon" style={{ fontSize: "2rem" }}>{card.icon}</div>
+                  <h3>{card.title}</h3>
+                  <p>{card.primary}</p>
+                  {card.subtitle && <small style={{ display: "block" }}>{card.subtitle}</small>}
+                </div>
+                {isAdmin && (
+                  <div className="admin-card-actions" style={{ justifyContent: "center", marginTop: 10 }}>
+                    <button
+                      className="btn btn-outline btn-xs"
+                      onClick={() => actions.openModal("editExtraInfoCard", {
+                        card,
+                        onSaved: (upd) => {
+                          const list = extraInfoCards.map(c => c.id === upd.id ? upd : c);
+                          actions.updateConfig("extraInfoCards", JSON.stringify(list));
+                        },
+                      })}
+                    >
+                      ✏️ Sửa
+                    </button>
+                    <button
+                      className="btn btn-danger btn-xs"
+                      onClick={() => {
+                        if (window.confirm("Xóa thẻ này?")) {
+                          const updated = extraInfoCards.filter(c => c.id !== card.id);
+                          actions.updateConfig("extraInfoCards", JSON.stringify(updated));
+                        }
+                      }}
+                    >
+                      🗑️ Xóa
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
+
+        {isAdmin && (
+          <div className="admin-add-wrap">
+            <button
+              className="btn btn-outline btn-sm add-card-btn"
+              onClick={() => actions.openModal("editExtraInfoCard", {
+                card: null,
+                onSaved: (newCard) => {
+                  const updated = [...extraInfoCards, newCard];
+                  actions.updateConfig("extraInfoCards", JSON.stringify(updated));
+                },
+              })}
+            >
+              + Thêm Thông Tin
+            </button>
+          </div>
+        )}
 
         {/* Events */}
         <div className="sub-heading">Các Nội Dung Thi Đấu</div>
@@ -221,7 +315,7 @@ export default function Tournament() {
 
 function EventCard({ event, isAdmin, onEdit, onDelete }) {
   return (
-    <div className="event-card">
+    <div className="event-card" style={{ textAlign: event.align || "left" }}>
       <div className="ev-icon">{event.icon}</div>
       <h4 className="ev-name">{event.name}</h4>
       <p className="ev-desc">{event.desc}</p>
@@ -236,10 +330,28 @@ function EventCard({ event, isAdmin, onEdit, onDelete }) {
 }
 
 function PrizeCard({ tier, pos, emoji, label, prize }) {
+  const align = prize?.align || "center";
+  const isImgUrl = prize?.image && (
+    prize.image.startsWith("http") ||
+    prize.image.startsWith("/") ||
+    prize.image.startsWith("data:")
+  );
   return (
-    <div className={`prize-card ${tier}`}>
+    <div className={`prize-card ${tier}`} style={{ textAlign: align }}>
       <div className="p-pos">{pos}</div>
-      <div className="p-medal">{emoji}</div>
+      {prize?.image ? (
+        isImgUrl ? (
+          <img
+            src={prize.image}
+            alt={label}
+            style={{ maxHeight: 80, objectFit: "contain", borderRadius: 6, marginBottom: 4, display: "inline-block" }}
+          />
+        ) : (
+          <div className="p-medal" style={{ fontSize: "2.5rem" }}>{prize.image}</div>
+        )
+      ) : (
+        <div className="p-medal">{emoji}</div>
+      )}
       <h4>{prize?.title || label}</h4>
       <p className="p-money">{prize?.amount || "—"}</p>
       <small>{prize?.desc || "Mỗi hạng cân"}</small>
