@@ -36,6 +36,7 @@ connectDB(MONGO_URI).then(async () => {
   app.use('/api/videos', require('./routes/videos'));
   app.use('/api/news',   require('./routes/news'));
   app.use('/api/views',  require('./routes/views'));
+  app.use('/api/chat',   require('./routes/chat'));
 
   // ── API 404 (trả JSON thay vì rơi vào SPA fallback) ──────────────────────────
   app.use('/api', (_req, res) => res.status(404).json({ success: false, message: 'Not found.' }));

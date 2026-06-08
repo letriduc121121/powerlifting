@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 export default function Chatbot() {
   const { state } = useApp();
-  const { config, images } = state;
+  const { images } = state;
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -12,6 +14,7 @@ export default function Chatbot() {
     },
   ]);
   const [inputVal, setInputVal] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [quickRepliesVisible] = useState(true);
   const messagesEndRef = useRef(null);
 
@@ -30,39 +33,38 @@ export default function Chatbot() {
     }
   }, [messages, isOpen]);
 
-  const getBotReply = (userText) => {
-    const t = userText.toLowerCase();
-    const date = config?.heroDate || "20/08/2026 – 21/08/2026";
-    const location = config?.heroLocation || "Thành phố Hà Nội";
-
-    if (t.includes("lịch") || t.includes("thời gian") || t.includes("ngày"))
-      return `📅 Giải đấu diễn ra vào **${date}** tại ${location}. Thời gian thi đấu từ 07:00 – 18:00 mỗi ngày.`;
-    if (t.includes("đăng ký") || t.includes("tham gia") || t.includes("tham dự"))
-      return "📝 Để đăng ký tham gia, hãy click nút **Đăng Ký Ngay** ở phần Giải Đấu. Bạn cần điền đầy đủ thông tin cá nhân và hạng cân thi đấu.";
-    if (t.includes("powerlifting") || t.includes("pl là gì") || t.includes("môn gì"))
-      return "🏋️ Powerlifting là bộ môn thể thao sức mạnh tối đa với 3 bài nâng: **Squat** (Gánh tạ), **Bench Press** (Đẩy ngực) và **Deadlift** (Kéo tạ). Mỗi VĐV có 3 lượt thực hiện mỗi bài để đạt mức tạ 1RM cao nhất.";
-    if (t.includes("hạng cân") || t.includes("cân nặng") || t.includes("weight"))
-      return "⚖️ **Nam:** 59, 66, 74, 83, 93, 105, 120, +120kg\n**Nữ:** 47, 52, 57, 63, 69, 76, 84, +84kg";
-    if (t.includes("địa điểm") || t.includes("ở đâu") || t.includes("nơi"))
-      return `📍 Giải đấu tổ chức tại **${location}**. Địa điểm cụ thể sẽ được thông báo sớm.`;
-    if (t.includes("giải thưởng") || t.includes("tiền thưởng") || t.includes("prize"))
-      return "🏆 Cơ cấu giải thưởng đang được cập nhật. Hãy theo dõi mục **Giải Đấu** để biết thông tin mới nhất!";
-    if (t.includes("xin chào") || t.includes("hello") || t.includes("hi"))
-      return "👋 Xin chào! Tôi là PL Assistant – trợ lý của giải Powerlifting 2026. Bạn cần hỏi thông tin gì?";
-    return "🤔 Cảm ơn câu hỏi của bạn! Tôi chưa có thông tin về vấn đề này. Hãy liên hệ BTC qua mạng xã hội của chúng tôi để được hỗ trợ tốt nhất nhé!";
-  };
-
-  const sendMessage = (text) => {
+  const sendMessage = async (text) => {
     const msg = (text || inputVal).trim();
-    if (!msg) return;
+    if (!msg || isLoading) return;
 
-    setMessages((prev) => [...prev, { role: "user", text: msg }]);
+    const currentMessages = [...messages, { role: "user", text: msg }];
+    setMessages(currentMessages);
     setInputVal("");
+    setIsLoading(true);
 
-    setTimeout(() => {
-      const reply = getBotReply(msg);
+    try {
+      const res = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: msg,
+          history: messages.slice(-6),
+        }),
+      });
+      const data = await res.json();
+      const reply = data.reply || "Đã có lỗi xảy ra, vui lòng thử lại.";
       setMessages((prev) => [...prev, { role: "bot", text: reply }]);
-    }, 600);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          text: "Không thể kết nối đến server. Vui lòng thử lại sau.",
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -71,7 +73,6 @@ export default function Chatbot() {
 
   return (
     <>
-      {/* Toggle Button */}
       <button
         className={`chatbot-toggle${isOpen ? " open" : ""}`}
         id="chatToggle"
@@ -95,19 +96,12 @@ export default function Chatbot() {
         )}
       </button>
 
-      {/* Chatbox */}
       {isOpen && (
         <div className="chatbot-box open" id="chatBox">
-          {/* Header */}
           <div className="chatbot-header">
             <div
               className="ch-avatar"
-              style={{
-                overflow: "hidden",
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-              }}
+              style={{ overflow: "hidden", width: 36, height: 36, borderRadius: "50%" }}
             >
               <img
                 id="chatHeaderMascot"
@@ -122,7 +116,6 @@ export default function Chatbot() {
             </div>
           </div>
 
-          {/* Messages */}
           <div className="chatbot-messages" id="chatMessages">
             {messages.map((m, i) => (
               <div key={i} className={`msg ${m.role}`}>
@@ -134,10 +127,16 @@ export default function Chatbot() {
                 ))}
               </div>
             ))}
+            {isLoading && (
+              <div className="msg bot">
+                <span className="typing-indicator">
+                  <span /><span /><span />
+                </span>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Replies */}
           {quickRepliesVisible && (
             <div className="quick-replies" id="quickReplies">
               {quickReplies.map((qr) => (
@@ -145,6 +144,7 @@ export default function Chatbot() {
                   key={qr.text}
                   className="qr-btn"
                   onClick={() => sendMessage(qr.text)}
+                  disabled={isLoading}
                 >
                   {qr.label}
                 </button>
@@ -152,7 +152,6 @@ export default function Chatbot() {
             </div>
           )}
 
-          {/* Input */}
           <div className="chatbot-input">
             <input
               type="text"
@@ -161,8 +160,11 @@ export default function Chatbot() {
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               onKeyDown={handleKeyDown}
+              disabled={isLoading}
             />
-            <button onClick={() => sendMessage()}>➤</button>
+            <button onClick={() => sendMessage()} disabled={isLoading}>
+              ➤
+            </button>
           </div>
         </div>
       )}

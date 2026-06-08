@@ -1,0 +1,214 @@
+[
+  {
+    "q": "Powerlifting là gì?",
+    "a": "Powerlifting là môn thể thao sức mạnh thi đấu gồm 3 bài tập: Squat, Bench Press và Deadlift. Vận động viên được thực hiện 3 lần thử mỗi bài, mục tiêu là đạt tổng trọng lượng (total) cao nhất."
+  },
+  {
+    "q": "Squat là gì?",
+    "a": "Squat là bài thi đấu đầu tiên. VĐV đặt tạ lên vai, ngồi xuống cho đến khi hip crease thấp hơn đỉnh đầu gối, sau đó đứng dậy hoàn toàn. Bài kiểm tra sức mạnh cơ đùi, mông và lưng dưới."
+  },
+  {
+    "q": "Bench Press là gì?",
+    "a": "Bench Press là bài thi đấu thứ hai. VĐV nằm trên ghế, hạ tạ chạm ngực, dừng chờ lệnh trọng tài, sau đó đẩy lên thẳng tay. Kiểm tra sức mạnh cơ ngực, vai trước và triceps."
+  },
+  {
+    "q": "Deadlift là gì?",
+    "a": "Deadlift là bài thi đấu cuối. VĐV kéo tạ từ sàn lên đến khi đứng thẳng người, hông khóa, vai ra sau. Đây thường là bài VĐV nâng được trọng lượng cao nhất."
+  },
+  {
+    "q": "Tổng (Total) được tính như thế nào?",
+    "a": "Total = best lift Squat + best lift Bench Press + best lift Deadlift. Ví dụ: 200 + 130 + 250 = 580kg. Không có lift hợp lệ ở bất kỳ bài nào sẽ bị DQ (disqualified)."
+  },
+  {
+    "q": "Wilks score là gì?",
+    "a": "Wilks score là hệ số so sánh sức mạnh giữa các VĐV có cân nặng khác nhau. Tính bằng Total × hệ số Wilks tương ứng với cân nặng và giới tính. Nhiều liên đoàn hiện dùng DOTS hoặc IPF GL Points thay thế."
+  },
+  {
+    "q": "Progressive overload là gì?",
+    "a": "Progressive overload là nguyên tắc tăng dần kích thích (tải trọng, số rep, số set) theo thời gian để cơ thể thích nghi và mạnh hơn. Đây là nền tảng của mọi chương trình powerlifting. Không có progressive overload, sức mạnh sẽ plateau."
+  },
+  {
+    "q": "RPE trong powerlifting là gì?",
+    "a": "RPE (Rate of Perceived Exertion) là thang đo cường độ từ 1–10. RPE 10 = tối đa không còn rep nào (0 RIR), RPE 9 = còn 1 rep (1 RIR), RPE 8 = còn 2 rep. RPE giúp lập trình training linh hoạt thay vì cứng nhắc theo số kg."
+  },
+  {
+    "q": "1RM là gì?",
+    "a": "1RM (One Rep Max) là trọng lượng tối đa thực hiện được đúng 1 lần với kỹ thuật đúng. Dùng làm cơ sở tính phần trăm tải trọng trong chương trình tập. Ví dụ: 80% 1RM = 80% trọng lượng tối đa."
+  },
+  {
+    "q": "Hạng cân nào có thể tham gia giải đấu?",
+    "a": "Nam: 59, 66, 74, 83, 93, 105, 120, +120kg. Nữ: 47, 52, 57, 63, 69, 76, 84, +84kg."
+  },
+  {
+    "q": "Thiết bị nào được phép trong powerlifting?",
+    "a": "Raw: belt, knee sleeves, wrist wraps. Equipped: thêm squat suit, bench shirt, knee wraps. Quy định cụ thể tùy liên đoàn (IPF, USAPL, WPC...)."
+  },
+  {
+    "q": "Đăng ký tham gia giải đấu như thế nào?",
+    "a": "Click nút Đăng Ký Ngay trên website. Điền đầy đủ thông tin cá nhân, hạng cân thi đấu và hoàn tất các bước theo hướng dẫn."
+  },
+  {
+    "q": "Lịch thi đấu của giải diễn ra khi nào?",
+    "a": "Giải đấu diễn ra 20/08/2026 – 21/08/2026 tại Hà Nội. Thời gian thi đấu 07:00 – 18:00 mỗi ngày."
+  },
+  {
+    "q": "Làm sao tăng deadlift?",
+    "a": "Cần progressive overload, cải thiện kỹ thuật hip hinge (lưng thẳng, bar gần người), tăng sức cơ sau qua Romanian Deadlift, Good Morning, Barbell Row. Tập thêm Deficit Deadlift để cải thiện phần off-floor."
+  },
+  {
+    "q": "Làm sao tăng squat?",
+    "a": "Cải thiện hip và ankle mobility, kỹ thuật (brace core, knees out, depth chuẩn), bổ trợ bằng Pause Squat, Box Squat, Leg Press. Đảm bảo hồi phục đủ giữa các buổi tập nặng."
+  },
+  {
+    "q": "Làm sao tăng bench press?",
+    "a": "Cần kỹ thuật đúng (leg drive, arch tự nhiên, retract shoulder blades), tăng sức triceps qua Close Grip Bench và Tricep Dips, tăng sức vai với Overhead Press. Pause Bench cải thiện phần off-chest."
+  },
+  {
+    "q": "Chương trình tập cho người mới bắt đầu powerlifting?",
+    "a": "Người mới nên bắt đầu với GZCLP hoặc Starting Strength. Tập 3 ngày/tuần, tập trung vào Squat, Bench, Deadlift với progressive overload mỗi buổi. Ưu tiên học kỹ thuật đúng trước khi tăng tải."
+  },
+  {
+    "q": "GZCLP là gì?",
+    "a": "GZCLP là chương trình tập linear progression 3 ngày/tuần. Chia bài thành Tier 1 (Squat/Deadlift), Tier 2 (Bench/OHP), Tier 3 (bổ trợ). Tăng tải mỗi buổi cho đến khi fail, sau đó reset và tăng rep."
+  },
+  {
+    "q": "nSuns là gì?",
+    "a": "nSuns là chương trình 4-6 ngày/tuần dựa trên 5/3/1 của Jim Wendler nhưng với volume cao hơn. Tập Squat, Bench, Deadlift làm main lift mỗi ngày với nhiều set và rep khác nhau theo tỷ lệ % 1RM."
+  },
+  {
+    "q": "Sheiko là gì?",
+    "a": "Sheiko là hệ thống tập từ HLV Boris Sheiko (Nga), nổi tiếng với frequency cao (squat và bench 3-4 lần/tuần) và volume rất lớn. Phù hợp VĐV trung cấp đến nâng cao muốn cải thiện kỹ thuật qua lặp lại nhiều."
+  },
+  {
+    "q": "Nên tập mấy ngày một tuần?",
+    "a": "Người mới: 3 ngày/tuần (ngày cách ngày). Trung cấp: 4 ngày. Nâng cao: 5-6 ngày. Mỗi bài chính (squat, bench, deadlift) nên tập ít nhất 2 lần/tuần để cải thiện kỹ thuật và sức mạnh."
+  },
+  {
+    "q": "Deload week là gì?",
+    "a": "Deload là tuần giảm tải để cơ thể hồi phục sau giai đoạn tập nặng. Thường giảm 40-50% volume hoặc intensity. Nên deload mỗi 4-8 tuần tùy cơ thể và bắt buộc trước ngày thi đấu."
+  },
+  {
+    "q": "Competition peaking là gì?",
+    "a": "Peaking là giai đoạn 4-6 tuần trước thi đấu, giảm dần volume, tăng intensity (% 1RM cao hơn). Mục tiêu là đạt peak strength đúng ngày thi. Tuần cuối thường chỉ tập nhẹ để phục hồi hoàn toàn."
+  },
+  {
+    "q": "Attempt selection trong thi đấu là gì?",
+    "a": "Mỗi VĐV chọn 3 mức tạ cho mỗi bài trước khi thi đấu. Opener (lần 1) nên là tạ chắc chắn thực hiện được (85-90% 1RM). Lần 2 và 3 tăng dần theo diễn biến. Chiến lược opener tốt rất quan trọng."
+  },
+  {
+    "q": "Lệnh của trọng tài trong thi đấu?",
+    "a": "Squat: 'Squat' (bắt đầu), 'Rack' (kết thúc). Bench: 'Start' (unrack), 'Press' (sau khi tạ chạm ngực và dừng), 'Rack'. Deadlift: không có lệnh bắt đầu, chỉ 'Down' sau khi đứng thẳng. VĐV phải chờ lệnh mới thực hiện."
+  },
+  {
+    "q": "White light và red light là gì?",
+    "a": "Sau mỗi lần thử, 3 trọng tài bật đèn trắng (hợp lệ) hoặc đỏ (không hợp lệ). Cần ít nhất 2 đèn trắng để lift được tính. 2-3 đèn đỏ là no lift."
+  },
+  {
+    "q": "Weigh-in là gì?",
+    "a": "Weigh-in là buổi cân VĐV trước thi đấu để xác nhận hạng cân. Thường diễn ra 24 giờ hoặc 2 giờ trước khi thi đấu tùy giải. VĐV phải cân đủ điều kiện hạng cân đã đăng ký."
+  },
+  {
+    "q": "Nên ăn bao nhiêu protein mỗi ngày?",
+    "a": "VĐV powerlifting nên ăn 1.6–2.2g protein/kg cân nặng mỗi ngày. Ví dụ: người 80kg cần 128–176g protein. Phân bổ đều 4-5 bữa để tối ưu tổng hợp protein cơ."
+  },
+  {
+    "q": "Cutting trong powerlifting là gì?",
+    "a": "Cutting là giảm cân xuống hạng cân thi đấu thấp hơn cân nặng thường ngày. Có 2 cách: cut dài hạn (giảm mỡ từ từ, ít ảnh hưởng sức mạnh) và water cut ngắn hạn (giảm nước 1-3kg trong 24-48h cuối)."
+  },
+  {
+    "q": "Bulking trong powerlifting là gì?",
+    "a": "Bulking là giai đoạn tăng cân có kiểm soát để tăng sức mạnh và cơ bắp. Nên tăng 0.25-0.5kg/tuần, ăn dư calo 200-400kcal/ngày. Tránh bulk quá nhiều làm tăng mỡ thừa gây khó cut sau này."
+  },
+  {
+    "q": "Sumo deadlift và conventional deadlift khác nhau thế nào?",
+    "a": "Conventional: chân hẹp, tay ngoài chân, range of motion dài hơn, đòi hỏi lưng và hamstring mạnh. Sumo: chân rộng, tay trong chân, range of motion ngắn hơn, đòi hỏi hông và quad mạnh. Cả hai đều hợp lệ trong thi đấu."
+  },
+  {
+    "q": "Pause squat là gì và tại sao nên tập?",
+    "a": "Pause squat là squat dừng lại 2-3 giây ở vị trí thấp nhất trước khi đứng lên. Giúp loại bỏ stretch reflex, xây dựng sức mạnh thực ở điểm yếu nhất, cải thiện kỹ thuật và tăng độ ổn định tổng thể."
+  },
+  {
+    "q": "Đai lưng (belt) dùng như thế nào?",
+    "a": "Belt tạo áp lực intra-abdominal để bảo vệ lưng. Đeo ở eo, đủ chặt nhưng vẫn thở được. Bracing vào belt khi hít sâu trước khi tập. Không nên dùng belt từ đầu — học brace không belt trước."
+  },
+  {
+    "q": "Knee sleeves và knee wraps khác nhau thế nào?",
+    "a": "Knee sleeves (ống gối) giữ ấm, giảm đau, hỗ trợ nhẹ — dùng trong hạng Raw. Knee wraps (băng quấn) hỗ trợ mạnh hơn nhiều nhờ elastic, tăng thêm tạ đáng kể — chỉ dùng trong hạng Equipped."
+  },
+  {
+    "q": "Wrist wraps dùng khi nào?",
+    "a": "Wrist wraps dùng khi bench press nặng để ổn định cổ tay và giảm stress. Quấn chặt vừa đủ, không quá chặt làm mất cảm giác. Được phép trong hạng Raw ở hầu hết các liên đoàn."
+  },
+  {
+    "q": "Lifting shoes quan trọng không?",
+    "a": "Giày tập powerlifting có đế cứng, không đàn hồi giúp truyền lực tốt hơn. Giày squat có gót cao (heel raise) hỗ trợ squat với ankle mobility hạn chế. Deadlift thường dùng giày đế phẳng hoặc mang vớ để giảm khoảng cách kéo."
+  },
+  {
+    "q": "Chalk (phấn tay) dùng để làm gì?",
+    "a": "Chalk (magnesium carbonate) hấp thụ mồ hôi, tăng ma sát giữa tay và thanh tạ giúp grip chắc hơn. Quan trọng nhất cho deadlift. Được phép trong thi đấu. Liquid chalk tiện lợi hơn khi tập ở gym."
+  },
+  {
+    "q": "Valsalva maneuver là gì?",
+    "a": "Valsalva là kỹ thuật hít sâu, đóng thanh quản và rặn xuống trước khi thực hiện lift để tạo áp lực intra-abdominal tối đa. Giúp ổn định cột sống và tăng sức mạnh. Bắt buộc với mọi lift nặng."
+  },
+  {
+    "q": "Lỗi squat hay gặp là gì?",
+    "a": "Butt wink (lưng tròn ở dưới cùng), knee cave (đầu gối đổ vào trong), không đủ depth (không xuống đủ sâu), good morning squat (torso đổ về trước quá nhiều). Nguyên nhân thường là thiếu mobility hoặc sai kỹ thuật bracing."
+  },
+  {
+    "q": "Lỗi bench press hay gặp là gì?",
+    "a": "Bar path cong (không thẳng đứng), elbow flare quá nhiều (hơn 90°), tạ nảy khỏi ngực thay vì pause, mông nhấc khỏi ghế, chân không giữ chặt. Những lỗi này làm giảm hiệu quả và tăng nguy cơ chấn thương vai."
+  },
+  {
+    "q": "Lỗi deadlift hay gặp là gì?",
+    "a": "Bar drift xa người (không ở gần cơ thể), lưng tròn quá nhiều, hips shooting up trước (squat morning), lockout không hoàn chỉnh (không khóa hông). Cần giữ bar sát chân suốt quá trình kéo."
+  },
+  {
+    "q": "Chấn thương phổ biến trong powerlifting?",
+    "a": "Lower back strain (kéo cơ lưng dưới), bicep tendon tear trong deadlift, shoulder impingement trong bench, patellar tendinitis trong squat. Nguyên nhân chính: tăng tải quá nhanh, kỹ thuật sai, thiếu warm-up."
+  },
+  {
+    "q": "Nên ngủ bao nhiêu giờ khi tập powerlifting?",
+    "a": "Tối thiểu 7-9 giờ mỗi đêm. Phần lớn recovery (tổng hợp protein, tăng hormone tăng trưởng) diễn ra trong khi ngủ. Thiếu ngủ làm giảm sức mạnh rõ rệt và tăng nguy cơ chấn thương."
+  },
+  {
+    "q": "Creatine có được phép dùng trong powerlifting không?",
+    "a": "Có, creatine hoàn toàn hợp pháp trong powerlifting kể cả các giải drug-tested. Creatine monohydrate là supplement được nghiên cứu nhiều nhất, giúp tăng sức mạnh và phục hồi. Dùng 3-5g mỗi ngày."
+  },
+  {
+    "q": "IPF là gì?",
+    "a": "IPF (International Powerlifting Federation) là liên đoàn powerlifting lớn nhất và uy tín nhất thế giới, được IOC công nhận. Có tiêu chuẩn nghiêm ngặt về kỹ thuật và drug testing. Các giải quốc gia muốn được tính ranking IPF cần là thành viên IPF."
+  },
+  {
+    "q": "Warm-up trước khi thi đấu như thế nào?",
+    "a": "Warm-up nên bắt đầu 45-60 phút trước khi thi đấu. Khởi động chung (10 phút), sau đó tập tạ nhẹ tăng dần (từ thanh không đến ~80% opener) với ít rep. Lần cuối cùng trước khi bước vào sân nên là 90-95% opener."
+  },
+  {
+    "q": "Nên ăn gì trước ngày thi đấu?",
+    "a": "Ngày trước: ăn đủ carb, không thử đồ ăn lạ. Sáng thi đấu: bữa ăn quen thuộc 2-3 giờ trước khi thi (cơm, yến mạch, bánh mì kết hợp protein). Trong ngày thi: snack nhẹ giữa các bài (chuối, bánh gạo, nước uống điện giải)."
+  },
+  {
+    "q": "Foam rolling có tác dụng gì?",
+    "a": "Foam rolling (self-myofascial release) giúp tăng lưu thông máu, giảm căng cơ và cải thiện tạm thời tầm vận động. Nên dùng sau tập để hồi phục chứ không phải trước tập nặng vì có thể giảm sức mạnh thoáng qua."
+  },
+  {
+    "q": "Periodization là gì?",
+    "a": "Periodization là lên kế hoạch training có chu kỳ, chia thành các giai đoạn (accumulation, intensification, peaking) với mục tiêu khác nhau. Giúp tránh overtraining, đạt peak đúng thời điểm thi đấu và phát triển liên tục dài hạn."
+  },
+  {
+    "q": "Ai có thể tham gia giải Powerlifting 2026?",
+    "a": "Giải mở rộng toàn quốc, dành cho VĐV từ 16 tuổi trở lên. Tham gia theo hạng cân và giới tính. Vui lòng xem phần Thể Lệ trên website hoặc liên hệ BTC để biết thêm điều kiện cụ thể."
+  },
+  {
+    "q": "Giải thưởng của giải đấu 2026 là bao nhiêu?",
+    "a": "Vô địch: 5.000.000đ mỗi hạng cân. Á quân: 3.000.000đ. Hạng ba: 1.500.000đ. Chi tiết có thể được cập nhật — theo dõi mục Giải Đấu trên website để biết thông tin mới nhất."
+  },
+  {
+    "q": "Touch and go deadlift và dead stop deadlift khác nhau thế nào?",
+    "a": "Dead stop: tạ đặt hoàn toàn xuống sàn giữa các rep, phải bắt đầu lại từ đầu. Đây là cách dùng trong thi đấu. Touch and go: tạ chỉ chạm sàn rồi kéo ngay, dùng stretch reflex. Dead stop tốt hơn cho tập luyện powerlifting."
+  },
+  {
+    "q": "Hook grip là gì?",
+    "a": "Hook grip là kiểu cầm tạ trong deadlift: ngón cái kẹp dưới các ngón tay còn lại. Cho phép cầm tạ rất chắc mà không cần dùng mixed grip. Đau khi mới tập nhưng sau vài tuần sẽ quen. Được dùng phổ biến ở VĐV nâng cao."
+  }
+]
