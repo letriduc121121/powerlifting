@@ -84,6 +84,10 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ success: false, message: 'No message provided.' });
   }
 
+  if (!process.env.GROQ_API_KEY) {
+    return res.json({ success: true, reply: localFallback(message) });
+  }
+
   const context = await findContext(message);
 
   const recentHistory = history.slice(-6).map(m => ({

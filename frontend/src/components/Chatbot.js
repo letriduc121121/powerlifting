@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 export default function Chatbot() {
   const { state } = useApp();
