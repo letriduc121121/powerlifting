@@ -1,0 +1,23 @@
+# Render Blueprint — deploy backend Express (thư mục backend/)
+# Dùng: Render Dashboard → New → Blueprint → chọn repo này.
+services:
+  - type: web
+    name: powerlifting-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/data
+    envVars:
+      # PORT do Render tự cấp — server.js đã đọc process.env.PORT.
+      - key: MONGO_URI
+        sync: false        # nhập trong Dashboard (chuỗi Atlas mongodb+srv)
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false        # đặt = URL frontend Vercel, vd https://powerlifting.vercel.app
