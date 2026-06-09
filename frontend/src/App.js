@@ -24,6 +24,23 @@ export default function App() {
     window.location.hash = "#home";
   }, []);
 
+  // Ping backend định kỳ để giữ backend không bị ngủ (keep-alive) khi có user mở web
+  useEffect(() => {
+    const pingBackend = () => {
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      fetch(`${apiUrl}/health`)
+        .then(() => console.log("Backend keep-alive ping sent successfully."))
+        .catch((err) => console.warn("Backend keep-alive ping failed:", err.message));
+    };
+
+    // Gửi ping ngay khi vừa tải trang
+    pingBackend();
+
+    // Ping định kỳ mỗi 10 phút (600,000 ms)
+    const interval = setInterval(pingBackend, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <AppProvider>
       <Navbar />
