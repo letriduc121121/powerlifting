@@ -95,8 +95,8 @@
   z-index: 499;
   width: 350px;
   background: var(--glass-bg-hover) !important;
-  backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-lg) !important;
@@ -252,4 +252,10 @@
 
 .chatbot-input button:hover {
   background: var(--blue-dark);
+}
+
+@media (max-width: 1200px) {
+    .chatbot-toggle {
+        bottom: 40px;
+    }
 }

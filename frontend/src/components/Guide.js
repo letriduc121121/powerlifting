@@ -3,8 +3,6 @@ import { useApp } from "../context/AppContext";
 import { videoAPI } from "../services/api";
 import Pagination from "./Pagination";
 
-// Lưu các video đã xem trong phiên hiện tại (biến bộ nhớ → tự reset khi load lại
-// trang). Mỗi video chỉ tính 1 lượt cho tới khi người dùng tải lại cả trang.
 const viewedVideos = new Set();
 
 export default function Guide() {
@@ -18,11 +16,12 @@ export default function Guide() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [videosPerPage, setVideosPerPage] = useState(window.innerWidth < 768 ? 3 : 6);
+  const [showRotateHint, setShowRotateHint] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
       setVideosPerPage(window.innerWidth < 768 ? 3 : 6);
-      setPage(1); // Reset page on resize to prevent empty pages
+      setPage(1);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -57,9 +56,26 @@ export default function Guide() {
     setFiltered(tag === "Tất cả" ? videos : videos.filter((v) => (v.tags || []).includes(tag)));
   };
 
+  const triggerRotateHint = () => {
+    setShowRotateHint(true);
+    setTimeout(() => setShowRotateHint(false), 3000);
+  };
+
   const openVideo = async (video) => {
     actions.openModal("videoViewer", { video });
-    // Chỉ tính 1 lượt/phiên — bỏ qua nếu đã xem (chống spam khi bấm liên tục).
+
+    if (window.innerWidth < 768) {
+      try {
+        if (window.screen.orientation?.lock) {
+          await window.screen.orientation.lock("landscape");
+        } else {
+          triggerRotateHint();
+        }
+      } catch {
+        triggerRotateHint();
+      }
+    }
+
     if (viewedVideos.has(video.id)) return;
     viewedVideos.add(video.id);
     try {
@@ -69,7 +85,7 @@ export default function Guide() {
       setVideos(bump);
       setFiltered(bump);
     } catch (_) {
-      viewedVideos.delete(video.id); // lỗi mạng → cho phép thử lại lần sau
+      viewedVideos.delete(video.id);
     }
   };
 
@@ -84,14 +100,18 @@ export default function Guide() {
           {isAdmin && (
             <button
               className="btn btn-primary btn-sm add-card-btn"
-              onClick={() => actions.openModal("addVideo", { onSaved: load, existingTags: allTags.filter(t => t !== "Tất cả") })}
+              onClick={() =>
+                actions.openModal("addVideo", {
+                  onSaved: load,
+                  existingTags: allTags.filter((t) => t !== "Tất cả"),
+                })
+              }
             >
               + Thêm Video
             </button>
           )}
         </div>
 
-        {/* Tag Filter */}
         <div className="tag-filter reveal" id="tagFilter">
           {allTags.map((tag) => (
             <button
@@ -104,7 +124,6 @@ export default function Guide() {
           ))}
         </div>
 
-        {/* Video Grid */}
         <div className="video-grid reveal" id="videoGrid">
           {loading ? (
             <p style={{ color: "var(--text-muted)", padding: "20px 0" }}>Đang tải...</p>
@@ -116,7 +135,13 @@ export default function Guide() {
                 key={video._id || video.id}
                 video={video}
                 isAdmin={isAdmin}
-                onEdit={() => actions.openModal("addVideo", { editItem: video, onSaved: load, existingTags: allTags.filter(t => t !== "Tất cả") })}
+                onEdit={() =>
+                  actions.openModal("addVideo", {
+                    editItem: video,
+                    onSaved: load,
+                    existingTags: allTags.filter((t) => t !== "Tất cả"),
+                  })
+                }
                 onDelete={() => handleDeleteVideo(video.id, load)}
                 onPin={() => handleTogglePin(video, load)}
                 onOpen={() => openVideo(video)}
@@ -125,7 +150,6 @@ export default function Guide() {
           )}
         </div>
 
-        {/* Pagination */}
         <Pagination
           page={page}
           totalPages={totalPages}
@@ -137,24 +161,43 @@ export default function Guide() {
           }}
         />
       </div>
+
+      {showRotateHint && (
+        <div className="rotate-hint">📱 Xoay ngang để xem tốt hơn</div>
+      )}
     </section>
   );
 }
 
 function VideoCard({ video, isAdmin, onEdit, onDelete, onPin, onOpen }) {
-  const thumb = video.thumbnail || getYoutubeThumbnail(video.url) || "";
+  const [thumbError, setThumbError] = useState(false);
+  const thumb = !thumbError
+    ? video.thumbnail || getYoutubeThumbnail(video.url) || ""
+    : "";
 
   return (
-    <div className={`video-card${video.pinned ? " is-pinned" : ""}`} onClick={onOpen} style={{ cursor: "pointer" }}>
+    <div
+      className={`video-card${video.pinned ? " is-pinned" : ""}`}
+      onClick={onOpen}
+      style={{ cursor: "pointer" }}
+    >
       <div className="vc-thumb">
         {thumb ? (
-          <img src={thumb} alt={video.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img
+            src={thumb}
+            alt={video.name}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            onError={() => setThumbError(true)}
+          />
         ) : (
           <div className="vc-thumb-placeholder" />
         )}
-        <div className="vc-play-overlay"><span className="vc-play-btn">▶</span></div>
+        <div className="vc-play-overlay">
+          <span className="vc-play-btn">▶</span>
+        </div>
         {video.pinned && <span className="pin-badge">📌 Đã ghim</span>}
       </div>
+
       <div className="vc-info">
         <div className="vc-title">{video.name}</div>
         <div className="vc-meta">
@@ -196,7 +239,9 @@ async function handleTogglePin(video, reload) {
 
 function getYoutubeThumbnail(url) {
   if (!url) return null;
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-  if (match) return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
-  return null;
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([^&?\s/]+)/
+  );
+  if (!match) return null;
+  return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
 }
